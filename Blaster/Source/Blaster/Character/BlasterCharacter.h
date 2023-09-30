@@ -29,6 +29,7 @@ protected:
 	void CrouchButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
+	void AimOffset(float DeltaTime);
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -52,10 +53,16 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 
+	float Yaw;
+	float Pitch;
+	FRotator StartingAimRotation;
+
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
 
 	FORCEINLINE bool IsWeaponEquipped() const;
 	FORCEINLINE bool IsAiming() const;
+	FORCEINLINE float GetYaw() const { return Yaw; }
+	FORCEINLINE float GetPitch() const { return Pitch; }
 };

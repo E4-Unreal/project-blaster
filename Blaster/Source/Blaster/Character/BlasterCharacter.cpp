@@ -10,6 +10,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -53,6 +54,8 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	AimOffset(DeltaTime);
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -158,6 +161,45 @@ void ABlasterCharacter::AimButtonReleased()
 	if(Combat)
 	{
 		Combat->SetIsAiming(false);
+	}
+}
+
+void ABlasterCharacter::AimOffset(float DeltaTime)
+{
+	// UnEquip 상태일 때는 무시
+	if(Combat && Combat->EquippedWeapon == nullptr) return;
+	
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+	
+	// YawOffset
+	// Idle
+	if(Speed == 0.f && !bIsInAir)
+	{
+		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		Yaw = DeltaAimRotation.Yaw;
+		
+		bUseControllerRotationYaw = false;
+	}
+
+	// Run or Jump
+	if(Speed > 0.f || bIsInAir)
+	{
+		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+	}
+
+	Pitch = GetBaseAimRotation().Pitch;
+	if(!IsLocallyControlled() && Pitch > 90.0f)
+	{
+		// [270, 360)를 [-90, 0)로 변환
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, Pitch);
 	}
 }
 

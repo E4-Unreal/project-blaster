@@ -49,4 +49,13 @@ private:
 	FRotator LastCharacterRotation;
 	FRotator CharacterRotation;
 	FRotator DeltaRotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float Yaw;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	float Pitch;
+
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	FTransform LeftHandTransform;
 };
