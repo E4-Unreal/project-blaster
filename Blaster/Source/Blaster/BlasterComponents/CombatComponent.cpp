@@ -12,24 +12,18 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+
+	BaseWalkSpeed = 600.f;
+	AimWalkSpeed = 450.f;
 }
 
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-}
 
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if(EquippedWeapon)
+	if(Character)
 	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-	else
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
-		Character->bUseControllerRotationYaw = false;
+		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	}
 }
 
@@ -73,15 +67,39 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	OnRep_EquippedWeapon(); // TODO Setter?
 }
 
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if(EquippedWeapon)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
+	else
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+		Character->bUseControllerRotationYaw = false;
+	}
+}
+
+void UCombatComponent::UpdateIsAiming(bool IsAiming)
+{
+	bIsAiming = IsAiming;
+	
+	if(Character)
+	{
+		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+}
+
 void UCombatComponent::SetIsAiming(bool IsAiming)
 {
 	ServerSetIsAiming(IsAiming);
 	
 	// RPC 호출 전에 해당 클라이언트에서는 미리 동작하도록 중복 호출
-	bIsAiming = IsAiming;
+	UpdateIsAiming(IsAiming);
 }
 
 void UCombatComponent::ServerSetIsAiming_Implementation(bool IsAiming)
 {
-	bIsAiming = IsAiming;
+	UpdateIsAiming(IsAiming);
 }
