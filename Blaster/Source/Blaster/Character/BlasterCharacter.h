@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
@@ -15,7 +14,7 @@ class BLASTER_API ABlasterCharacter : public ACharacter
 public:
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 
@@ -27,6 +26,7 @@ protected:
 	void Turn(float Value);
 	void LookUp(float Value);
 	void EquipButtonPressed();
+	void CrouchButtonPressed();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -54,5 +54,5 @@ public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
 
-	FORCEINLINE bool IsWeaponEquipped() const { return (Combat && Combat->EquippedWeapon); }
+	FORCEINLINE bool IsWeaponEquipped() const;
 };
