@@ -30,7 +30,15 @@ private:
 
 	UPROPERTY(Replicated)
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(Replicated)
+	bool bIsAiming;
 	
-public:	
-		
+public:
+
+protected:
+	void SetIsAiming(bool IsAiming);
+	
+	UFUNCTION(Server, Reliable)
+	void ServerSetIsAiming(bool IsAiming);
 };

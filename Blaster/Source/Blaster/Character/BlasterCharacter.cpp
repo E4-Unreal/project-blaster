@@ -64,6 +64,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ThisClass::Jump);
 	PlayerInputComponent->BindAction("Equip", IE_Pressed, this, &ThisClass::EquipButtonPressed);
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ThisClass::AimButtonPressed);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -140,6 +142,22 @@ void ABlasterCharacter::CrouchButtonPressed()
 		Crouch();
 }
 
+void ABlasterCharacter::AimButtonPressed()
+{
+	if(Combat)
+	{
+		Combat->SetIsAiming(true);
+	}
+}
+
+void ABlasterCharacter::AimButtonReleased()
+{
+	if(Combat)
+	{
+		Combat->SetIsAiming(false);
+	}
+}
+
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	// 플레이어가 서버인 경우 OnRep_OverlappingWeapon 대체
@@ -163,7 +181,12 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 
 bool ABlasterCharacter::IsWeaponEquipped() const
 {
-	return (Combat && Combat->EquippedWeapon);
+	return Combat && Combat->EquippedWeapon;
+}
+
+bool ABlasterCharacter::IsAiming() const
+{
+	return Combat && Combat->bIsAiming;
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)

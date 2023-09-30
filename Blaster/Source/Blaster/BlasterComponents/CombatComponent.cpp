@@ -28,6 +28,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, EquippedWeapon);
+	DOREPLIFETIME(ThisClass, bIsAiming);
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
@@ -56,3 +57,15 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon = WeaponToEquip;
 }
 
+void UCombatComponent::SetIsAiming(bool IsAiming)
+{
+	ServerSetIsAiming(IsAiming);
+	
+	// RPC 호출 전에 해당 클라이언트에서는 미리 동작하도록 중복 호출
+	bIsAiming = IsAiming;
+}
+
+void UCombatComponent::ServerSetIsAiming_Implementation(bool IsAiming)
+{
+	bIsAiming = IsAiming;
+}
