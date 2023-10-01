@@ -12,6 +12,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Blaster/BlasterTypes/TurnInPlaceState.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -174,15 +175,18 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	float Speed = Velocity.Size();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
-	// YawOffset
+	// Yaw
 	// Idle
 	if(Speed == 0.f && !bIsInAir)
 	{
 		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 		Yaw = DeltaAimRotation.Yaw;
-		
-		bUseControllerRotationYaw = false;
+		if(TurnInPlaceState == ETurnInPlaceState::ETIP_NotTurning)
+		{
+			InterpYaw = Yaw;
+		}
+		TurnInPlace(DeltaTime);
 	}
 
 	// Run or Jump
@@ -190,7 +194,7 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	{
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		Yaw = 0.f;
-		bUseControllerRotationYaw = true;
+		TurnInPlaceState = ETurnInPlaceState::ETIP_NotTurning;
 	}
 
 	Pitch = GetBaseAimRotation().Pitch;
@@ -200,6 +204,31 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		FVector2D InRange(270.f, 360.f);
 		FVector2D OutRange(-90.f, 0.f);
 		Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, Pitch);
+	}
+}
+
+void ABlasterCharacter::TurnInPlace(float DeltaTime)
+{
+	if(Yaw > 90.f)
+	{
+		// Turn Right
+		TurnInPlaceState = ETurnInPlaceState::ETIP_Right;
+	}
+	else if(Yaw < -90.f)
+	{
+		// Turn Left
+		TurnInPlaceState = ETurnInPlaceState::ETIP_Left;
+	}
+
+	if(TurnInPlaceState != ETurnInPlaceState::ETIP_NotTurning)
+	{
+		InterpYaw = FMath::FInterpTo(InterpYaw, 0.f, DeltaTime, 4.f);
+		Yaw = InterpYaw;
+		if(FMath::Abs(Yaw) < 15.f)
+		{
+			TurnInPlaceState = ETurnInPlaceState::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
 	}
 }
 

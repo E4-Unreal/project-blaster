@@ -70,4 +70,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 	}
+
+	// Turn In Place
+	TurnInPlaceState = BlasterCharacter->GetTurnInPlaceState();
 }

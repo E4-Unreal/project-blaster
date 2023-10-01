@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
+enum class ETurnInPlaceState : uint8;
+
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter
 {
@@ -54,8 +56,12 @@ private:
 	void ServerEquipButtonPressed();
 
 	float Yaw;
+	float InterpYaw;
 	float Pitch;
 	FRotator StartingAimRotation;
+
+	ETurnInPlaceState TurnInPlaceState;
+	void TurnInPlace(float DeltaTime);
 
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
@@ -66,4 +72,5 @@ public:
 	FORCEINLINE float GetYaw() const { return Yaw; }
 	FORCEINLINE float GetPitch() const { return Pitch; }
 	FORCEINLINE AWeapon* GetEquippedWeapon();
+	FORCEINLINE ETurnInPlaceState GetTurnInPlaceState() const { return TurnInPlaceState; }
 };

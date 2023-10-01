@@ -6,6 +6,8 @@
 #include "Animation/AnimInstance.h"
 #include "BlasterAnimInstance.generated.h"
 
+enum class ETurnInPlaceState : uint8;
+
 /**
  * 
  */
@@ -52,13 +54,16 @@ private:
 	FRotator LastCharacterRotation;
 	FRotator CharacterRotation;
 	FRotator DeltaRotation;
-
-	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	
+	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	float Yaw;
 
-	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	float Pitch;
 
-	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	FTransform LeftHandTransform;
+
+	UPROPERTY(BlueprintReadOnly, Category = TurnInPlace, meta = (AllowPrivateAccess = "true"))
+	ETurnInPlaceState TurnInPlaceState;
 };
