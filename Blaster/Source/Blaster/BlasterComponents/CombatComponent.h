@@ -28,6 +28,8 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	void FireButtonPressed(bool bPressed);
+
 private:
 	ABlasterCharacter* Character;
 
@@ -44,6 +46,8 @@ private:
 	float AimWalkSpeed;
 
 	void UpdateIsAiming(bool IsAiming);
+
+	bool bIsFireButtonPressed;
 	
 public:
 
