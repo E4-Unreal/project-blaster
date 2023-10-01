@@ -21,10 +21,13 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Character
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+
+	// Character Movement
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 850.f, 0.f);
 
 	// Net
 	NetUpdateFrequency = 66.f;
@@ -124,6 +127,15 @@ void ABlasterCharacter::Turn(float Value)
 void ABlasterCharacter::LookUp(float Value)
 {
 	AddControllerPitchInput(Value);
+}
+
+void ABlasterCharacter::Jump()
+{
+	// TODO UnCrouch > Jump 두 동작을 동시에?
+	if(bIsCrouched)
+		UnCrouch();
+	else
+		Super::Jump();
 }
 
 void ABlasterCharacter::EquipButtonPressed()

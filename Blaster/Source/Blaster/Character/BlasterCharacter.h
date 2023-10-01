@@ -27,6 +27,7 @@ protected:
 	void MoveRight(float Value);
 	void Turn(float Value);
 	void LookUp(float Value);
+	virtual void Jump() override;
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
 	void AimButtonPressed();
@@ -67,10 +68,10 @@ public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
 
-	FORCEINLINE bool IsWeaponEquipped() const;
-	FORCEINLINE bool IsAiming() const;
+	bool IsWeaponEquipped() const;
+	bool IsAiming() const;
 	FORCEINLINE float GetYaw() const { return Yaw; }
 	FORCEINLINE float GetPitch() const { return Pitch; }
-	FORCEINLINE AWeapon* GetEquippedWeapon();
+	AWeapon* GetEquippedWeapon();
 	FORCEINLINE ETurnInPlaceState GetTurnInPlaceState() const { return TurnInPlaceState; }
 };
