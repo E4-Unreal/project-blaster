@@ -54,7 +54,8 @@ private:
 	FRotator LastCharacterRotation;
 	FRotator CharacterRotation;
 	FRotator DeltaRotation;
-	
+
+	// Aim Offset
 	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	float Yaw;
 
@@ -64,6 +65,14 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	FTransform LeftHandTransform;
 
+	// Turn In Place
 	UPROPERTY(BlueprintReadOnly, Category = TurnInPlace, meta = (AllowPrivateAccess = "true"))
 	ETurnInPlaceState TurnInPlaceState;
+
+	// Weapon Correction
+	UPROPERTY(BlueprintReadOnly, Category = WeaponCorrection, meta = (AllowPrivateAccess = "true"))
+	FRotator RightHandRotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = WeaponCorrection, meta = (AllowPrivateAccess = "true"))
+	bool bIsLocallyControlled;
 };

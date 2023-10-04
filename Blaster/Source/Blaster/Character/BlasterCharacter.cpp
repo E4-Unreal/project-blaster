@@ -312,9 +312,12 @@ bool ABlasterCharacter::IsAiming() const
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon()
 {
-	if(Combat == nullptr) return nullptr;
+	return Combat == nullptr ? nullptr : Combat->EquippedWeapon;
+}
 
-	return Combat->EquippedWeapon;
+FVector ABlasterCharacter::GetHitTarget() const
+{
+	return Combat == nullptr ? FVector() : Combat->HitTarget;
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)

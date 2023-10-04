@@ -63,12 +63,22 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// IK
 	if(bIsWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
 	{
+		// FABRIK Effect Transform
 		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_l"), RTS_World);
 		FVector OutPosition;
 		FRotator OutRotation;
 		BlasterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		// 목표를 향해 총구 방향 조정
+		if(BlasterCharacter->IsLocallyControlled())
+		{
+			bIsLocallyControlled = true;
+			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
+			FVector RightHandLocation = RightHandTransform.GetLocation();
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandLocation, RightHandLocation + (RightHandLocation - BlasterCharacter->GetHitTarget()));
+		}
 	}
 
 	// Turn In Place

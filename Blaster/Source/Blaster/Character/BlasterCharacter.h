@@ -76,10 +76,14 @@ public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
 
+	// Combat Component
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
+	AWeapon* GetEquippedWeapon();
+	FVector GetHitTarget() const;
+
+	// Turn In Place
 	FORCEINLINE float GetYaw() const { return Yaw; }
 	FORCEINLINE float GetPitch() const { return Pitch; }
-	AWeapon* GetEquippedWeapon();
 	FORCEINLINE ETurnInPlaceState GetTurnInPlaceState() const { return TurnInPlaceState; }
 };

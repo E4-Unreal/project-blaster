@@ -65,6 +65,10 @@ private:
 
 	bool bIsFireButtonPressed;
 
+	// TODO 레플리케이션
+	// Hit Target
+	FVector HitTarget;
+
 	// Crosshairs
 	float CrosshairsVelocityFactor;
 	float CrosshairsInAirFactor;

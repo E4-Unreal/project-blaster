@@ -33,8 +33,17 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	SetHUDCrosshairs(DeltaTime);
+	
+	if(Character && Character->IsLocallyControlled())
+	{
+		// Hit Target
+		FHitResult HitResult;
+		TraceUnderCrosshair(HitResult);
+		HitTarget = HitResult.ImpactPoint;
+		
+		// Draw Crosshairs
+		SetHUDCrosshairs(DeltaTime);
+	}
 }
 
 void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
@@ -144,9 +153,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 	if(bIsFireButtonPressed)
 	{
-		FHitResult HitResult;
-		TraceUnderCrosshair(HitResult);
-		ServerFire(HitResult.ImpactPoint);
+		ServerFire(HitTarget);
 	}
 }
 
