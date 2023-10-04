@@ -100,8 +100,21 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			? FMath::FInterpTo(CrosshairsInAirFactor, 2.25f, DeltaTime, 2.25f)
 			: FMath::FInterpTo(CrosshairsInAirFactor, 0.f, DeltaTime, 30.f);
 
+			// 조준 상태에서의 분산도
+			CrosshairsAimFactor = bIsAiming
+			? FMath::FInterpTo(CrosshairsAimFactor, .58f, DeltaTime, 30.f) // TODO 줌 인 보간 속도와 싱크?
+			: FMath::FInterpTo(CrosshairsAimFactor, 0.f, DeltaTime, 30.f);
+
+			// 총기 발사 시 분산도
+			CrosshairsShootingFactor = FMath::FInterpTo(CrosshairsShootingFactor, 0.f, DeltaTime, 20.f);
+
 			// 총 분산도
-			HUDPackage.CrosshairsSpread = CrosshairsVelocityFactor + CrosshairsInAirFactor;
+			HUDPackage.CrosshairsSpread =
+				0.58f
+				+ CrosshairsVelocityFactor
+				+ CrosshairsInAirFactor
+				- CrosshairsAimFactor
+				+ CrosshairsShootingFactor;
 			
 			HUD->SetHUDPackage(HUDPackage);
 		}
@@ -164,6 +177,11 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	if(bIsFireButtonPressed)
 	{
 		ServerFire(HitTarget);
+
+		if(EquippedWeapon)
+		{
+			CrosshairsShootingFactor = .75f;
+		}
 	}
 }
 

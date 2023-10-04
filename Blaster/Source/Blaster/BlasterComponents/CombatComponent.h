@@ -72,6 +72,8 @@ private:
 	// Crosshairs
 	float CrosshairsVelocityFactor;
 	float CrosshairsInAirFactor;
+	float CrosshairsAimFactor;
+	float CrosshairsShootingFactor;
 
 	// Aiming and FOV
 	// TODO 제거?
