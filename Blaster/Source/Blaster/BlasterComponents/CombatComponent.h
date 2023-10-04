@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/HUD/BlasterHUD.h"
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
@@ -64,16 +65,18 @@ private:
 	void UpdateIsAiming(bool IsAiming);
 
 	bool bIsFireButtonPressed;
-
+	
 	// TODO 레플리케이션
 	// Hit Target
-	FVector HitTarget;
+	FHitResult HitResult;
+	FVector_NetQuantize HitTarget;
 
 	// Crosshairs
 	float CrosshairsVelocityFactor;
 	float CrosshairsInAirFactor;
 	float CrosshairsAimFactor;
 	float CrosshairsShootingFactor;
+	FHUDPackage HUDPackage;
 
 	// Aiming and FOV
 	// TODO 제거?

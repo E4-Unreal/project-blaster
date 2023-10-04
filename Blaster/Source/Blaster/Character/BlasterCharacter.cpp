@@ -23,6 +23,7 @@ ABlasterCharacter::ABlasterCharacter()
 	bUseControllerRotationYaw = false;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
 	// Character Movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;

@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/Interfaces/IInteractableWithCrosshairs.h"
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
 enum class ETurnInPlaceState : uint8;
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractableWithCrosshairs
 {
 	GENERATED_BODY()
 

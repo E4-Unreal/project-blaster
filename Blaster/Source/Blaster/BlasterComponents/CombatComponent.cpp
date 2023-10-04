@@ -4,7 +4,6 @@
 #include "CombatComponent.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
-#include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
@@ -12,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+//#include "Blaster/HUD/BlasterHUD.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -44,7 +44,6 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	if(Character && Character->IsLocallyControlled())
 	{
 		// Hit Target
-		FHitResult HitResult;
 		TraceUnderCrosshair(HitResult);
 		HitTarget = HitResult.ImpactPoint;
 		
@@ -68,7 +67,6 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		// 크로스헤어 텍스처
 		if(HUD)
 		{
-			FHUDPackage HUDPackage;
 			if(EquippedWeapon)
 			{
 				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
@@ -85,6 +83,12 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				HUDPackage.CrosshairsTop = nullptr;
 				HUDPackage.CrosshairsBottom = nullptr;
 			}
+
+			// 크로스 헤어 색상
+			// HitTarget 대상에 따른 크로스헤어 색상 변경
+			HUDPackage.CrosshairsColor = HitResult.GetActor() && HitResult.GetActor()->Implements<UInteractableWithCrosshairs>()
+			? FLinearColor::Red
+			: FLinearColor::White;
 
 			// 크로스헤어 분산도 계산
 			FVector2D WalkSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
@@ -214,6 +218,8 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 			End,
 			ECC_Visibility
 			);
+
+		// 허공을 바라보고 있는 경우
 		if(!TraceHitResult.bBlockingHit)
 		{
 			TraceHitResult.ImpactPoint = End;

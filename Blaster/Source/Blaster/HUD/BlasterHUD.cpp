@@ -19,34 +19,35 @@ void ABlasterHUD::DrawHUD()
 		if(HUDPackage.CrosshairsCenter)
 		{
 			FVector2D CrosshairsSpread(0.f, 0.f);
-			DrawCrosshairs(HUDPackage.CrosshairsCenter, ViewportCenter, CrosshairsSpread);
+			DrawCrosshairs(HUDPackage.CrosshairsCenter, ViewportCenter, CrosshairsSpread, HUDPackage.CrosshairsColor);
 		}
 		if(HUDPackage.CrosshairsLeft)
 		{
 			FVector2D CrosshairsSpread(-SpreadScaled, 0.f);
-			DrawCrosshairs(HUDPackage.CrosshairsLeft, ViewportCenter, CrosshairsSpread);
+			DrawCrosshairs(HUDPackage.CrosshairsLeft, ViewportCenter, CrosshairsSpread, HUDPackage.CrosshairsColor);
 		}
 		if(HUDPackage.CrosshairsRight)
 		{
 			FVector2D CrosshairsSpread(SpreadScaled, 0.f);
-			DrawCrosshairs(HUDPackage.CrosshairsRight, ViewportCenter, CrosshairsSpread);
+			DrawCrosshairs(HUDPackage.CrosshairsRight, ViewportCenter, CrosshairsSpread, HUDPackage.CrosshairsColor);
 		}
 
 		// UV 좌표에서는 위쪽 방향이 -Y이다.
 		if(HUDPackage.CrosshairsTop)
 		{
 			FVector2D CrosshairsSpread(0.f, -SpreadScaled);
-			DrawCrosshairs(HUDPackage.CrosshairsTop, ViewportCenter, CrosshairsSpread);
+			DrawCrosshairs(HUDPackage.CrosshairsTop, ViewportCenter, CrosshairsSpread, HUDPackage.CrosshairsColor);
 		}
 		if(HUDPackage.CrosshairsBottom)
 		{
 			FVector2D CrosshairsSpread(0.f, SpreadScaled);
-			DrawCrosshairs(HUDPackage.CrosshairsBottom, ViewportCenter, CrosshairsSpread);
+			DrawCrosshairs(HUDPackage.CrosshairsBottom, ViewportCenter, CrosshairsSpread, HUDPackage.CrosshairsColor);
 		}
 	}
 }
 
-void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread)
+void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread,
+	FLinearColor CrosshairsColor)
 {
 	// TODO ViewportSize에 따른 Texture 크기 조정
 	const float TextureWidth = Texture->GetSizeX();
@@ -65,6 +66,7 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, 
 		0.f,
 		0.f,
 		1.f,
-		1.f
+		1.f,
+		CrosshairsColor
 	);
 }

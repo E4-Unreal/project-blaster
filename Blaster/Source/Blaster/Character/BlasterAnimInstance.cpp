@@ -71,13 +71,14 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 
-		// 목표를 향해 총구 방향 조정
+		// 목표를 향해 총구 방향 조정 (오른손 본 트랜스폼 (Rotation) 변경)
 		if(BlasterCharacter->IsLocallyControlled())
 		{
 			bIsLocallyControlled = true;
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), RTS_World);
 			FVector RightHandLocation = RightHandTransform.GetLocation();
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(RightHandLocation, RightHandLocation + (RightHandLocation - BlasterCharacter->GetHitTarget()));
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(RightHandLocation, RightHandLocation + (RightHandLocation - BlasterCharacter->GetHitTarget()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 30.f);
 		}
 	}
 
