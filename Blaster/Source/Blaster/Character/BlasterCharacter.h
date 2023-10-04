@@ -21,7 +21,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 
+	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
+	
+	// 피격 이벤트
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
 
 protected:
 	virtual void BeginPlay() override;
@@ -62,6 +67,7 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 
+	// Turn In Place
 	float Yaw;
 	float InterpYaw;
 	float Pitch;
@@ -70,8 +76,14 @@ private:
 	ETurnInPlaceState TurnInPlaceState;
 	void TurnInPlace(float DeltaTime);
 
+	// 애님 몽타주
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
+	UAnimMontage* HitReactMontage;
+
+	void PlayHitReactMontage();
 
 	// 카메라와 캐릭터 간의 거리가 너무 가까워지면 캐릭터 및 무기 메시 숨기기
 	void HideCharacter();

@@ -3,6 +3,7 @@
 
 #include "BlasterCharacter.h"
 
+#include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
@@ -22,6 +23,7 @@ ABlasterCharacter::ABlasterCharacter()
 	// Character
 	bUseControllerRotationYaw = false;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
@@ -112,6 +114,20 @@ void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bIsAiming ? FName("RifleIronSights") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayHitReactMontage()
+{
+	// TODO UnEquipped 상태에서 몽타주 재생이 안 되는 이유? Montage_Play 호출은 하지만 실제로 재생은 안 됨
+	// if(Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		const FName SectionName("FromFront"); // TODO 방향에 따라 다른 재생
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -300,6 +316,11 @@ void ABlasterCharacter::HideCharacter()
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
+}
+
+void ABlasterCharacter::MulticastHit_Implementation()
+{
+	PlayHitReactMontage();
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)

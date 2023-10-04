@@ -3,6 +3,8 @@
 
 #include "Projectile.h"
 
+#include "Blaster/Blaster.h"
+#include "Blaster/Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,6 +23,7 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
 
 	// Projectile Movement
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -37,7 +40,7 @@ void AProjectile::Destroyed()
 	Super::Destroyed();
 
 	// TODO 재질에 따른 효과
-	
+	// 총알 피격 효과 스폰
 	if(ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
@@ -74,6 +77,11 @@ void AProjectile::BeginPlay()
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if(auto BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
+	{
+		BlasterCharacter->MulticastHit();
+	}
+	
 	Destroy();
 }
 
