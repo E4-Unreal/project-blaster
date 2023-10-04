@@ -210,13 +210,21 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 	if(bScreenToWorld)
 	{
 		FVector Start = CrosshairWorldPosition;
+		if(Character)
+		{
+			float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+			Start += CrosshairWorldDirection * (DistanceToCharacter + 25.f);
+		}
 		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 
+		FCollisionQueryParams CollisionQueryParams;
+		CollisionQueryParams.AddIgnoredActor(GetOwner());
 		GetWorld()->LineTraceSingleByChannel(
 			TraceHitResult,
 			Start,
 			End,
-			ECC_Visibility
+			ECC_Visibility,
+			CollisionQueryParams
 			);
 
 		// 허공을 바라보고 있는 경우

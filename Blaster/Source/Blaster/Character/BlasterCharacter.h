@@ -72,6 +72,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+
+	// 카메라와 캐릭터 간의 거리가 너무 가까워지면 캐릭터 및 무기 메시 숨기기
+	void HideCharacter();
+
+	UPROPERTY(EditAnywhere)
+	float CameraThreshold = 200.f;
 	
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
