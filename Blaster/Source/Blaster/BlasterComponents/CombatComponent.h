@@ -72,6 +72,19 @@ private:
 	// Crosshairs
 	float CrosshairsVelocityFactor;
 	float CrosshairsInAirFactor;
+
+	// Aiming and FOV
+	// TODO 제거?
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float DefaultZoomedFOV = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float DefaultZoomInterpSpeed = 20.f;
+	
+	float DefaultFOV;
+	float CurrentFOV;
+
+	void InterpFOV(float DeltaTime);
 	
 public:
 

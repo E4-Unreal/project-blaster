@@ -29,7 +29,9 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
 
-	// HUD 크로스헤어
+	/**
+	 * HUD 크로스헤어
+	 */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;
 	
@@ -88,8 +90,19 @@ private:
 	// TODO Projectile Weapon 클래스?
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
+
+	// 조준 시 줌 인
+	UPROPERTY(EditAnywhere)
+	float ZoomedFOV = 30.f;
+	
+	UPROPERTY(EditAnywhere)
+	float ZoomInterpSpeed = 20.f;
 	
 public:
 	void SetWeaponState(EWeaponState InState);
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+
+	// 조준 시 줌 인
+	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
+	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
 };

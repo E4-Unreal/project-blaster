@@ -75,6 +75,7 @@ private:
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	// Combat Component
 	bool IsWeaponEquipped() const;
