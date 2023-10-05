@@ -36,6 +36,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	EquippedWeapon = BlasterCharacter->GetEquippedWeapon();
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 	bIsAiming = BlasterCharacter->IsAiming();
+	bIsEliminated = BlasterCharacter->IsEliminated();
 
 	/*
 	 * Yaw Offset for Strafing
@@ -84,4 +85,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	// Turn In Place
 	TurnInPlaceState = BlasterCharacter->GetTurnInPlaceState();
+}
+
+void UBlasterAnimInstance::OnEliminated(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+{
+	BlasterCharacter->PlayEliminatedMontage();
 }

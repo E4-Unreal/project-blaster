@@ -23,6 +23,11 @@ public:
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
+	void PlayEliminatedMontage();
+
+	// Dead
+	UFUNCTION(NetMulticast, Reliable)
+	void Eliminate();
 
 protected:
 	virtual void BeginPlay() override;
@@ -82,6 +87,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* EliminatedMontage;
+
 	void PlayHitReactMontage();
 
 	// 카메라와 캐릭터 간의 거리가 너무 가까워지면 캐릭터 및 무기 메시 숨기기
@@ -99,6 +107,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health(float OldHealth);
+
+	bool bIsEliminated = false;
 
 	// HUD
 	class ABlasterPlayerController* BlasterPlayerController;
@@ -120,4 +130,5 @@ public:
 	FORCEINLINE float GetYaw() const { return Yaw; }
 	FORCEINLINE float GetPitch() const { return Pitch; }
 	FORCEINLINE ETurnInPlaceState GetTurnInPlaceState() const { return TurnInPlaceState; }
+	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
 };

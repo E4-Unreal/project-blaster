@@ -20,6 +20,11 @@ public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+protected:
+	// Eliminated
+	UFUNCTION(BlueprintCallable, Category = Eliminated, meta=(BlueprintThreadSafe))
+	void OnEliminated(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
+
 private:
 	UPROPERTY(BlueprintReadOnly, Category = Character, meta = (AllowPrivateAccess = "true"))
 	class ABlasterCharacter* BlasterCharacter;
@@ -75,4 +80,8 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = WeaponCorrection, meta = (AllowPrivateAccess = "true"))
 	bool bIsLocallyControlled;
+
+	// Eliminated
+	UPROPERTY(BlueprintReadOnly, Category = Eliminated, meta = (AllowPrivateAccess = "true"))
+	bool bIsEliminated;
 };

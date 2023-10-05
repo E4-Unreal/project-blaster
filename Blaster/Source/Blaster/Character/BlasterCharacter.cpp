@@ -3,6 +3,7 @@
 
 #include "BlasterCharacter.h"
 
+#include "BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Weapon/Weapon.h"
@@ -14,6 +15,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Blaster/BlasterTypes/TurnInPlaceState.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 
 // Sets default values
@@ -126,6 +128,20 @@ void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
 		const FName SectionName = bIsAiming ? FName("RifleIronSights") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void ABlasterCharacter::PlayEliminatedMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance && EliminatedMontage)
+	{
+		AnimInstance->Montage_Play(EliminatedMontage);
+	}
+}
+
+void ABlasterCharacter::Eliminate_Implementation()
+{
+	bIsEliminated = true;
 }
 
 void ABlasterCharacter::PlayHitReactMontage()
@@ -285,10 +301,24 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 void ABlasterCharacter::OnTakeAnyDamage_Event(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
 	AController* InstigatedBy, AActor* DamageCauser)
 {
+	// 데미지 적용
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUD_Health();
-	if(Damage > 0)	
+
+	// 체력과 데미지에 따른 반응
+	if(Health == 0.f) // Dead
+	{
+		if(ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		{
+			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
+	else if(Damage > 0)
+	{
 		PlayHitReactMontage();
+	}
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
