@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blaster/Interfaces/IInteractableWithCrosshairs.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "BlasterCharacter.generated.h"
 
@@ -123,6 +124,28 @@ private:
 	class ABlasterPlayerController* BlasterPlayerController;
 
 	void UpdateHUD_Health();
+
+	// Dissolve Effect
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	void StartDissolve();
+
+	// 런타임 때 사용할 다이나믹 머터리얼 인스턴스
+	UPROPERTY(VisibleAnywhere, Category = Dissolve)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	// 다이나믹 머터리얼 인스턴스의 원본
+	UPROPERTY(EditAnywhere, Category = Dissolve)
+	UMaterialInstance* DissolveMaterialInstance;
 	
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
