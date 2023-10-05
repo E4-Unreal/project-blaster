@@ -90,6 +90,19 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
+
+	// 체력
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = PlayerStats)
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
+	// HUD
+	class ABlasterPlayerController* BlasterPlayerController;
 	
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
