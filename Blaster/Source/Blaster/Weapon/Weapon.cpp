@@ -48,7 +48,7 @@ void AWeapon::BeginPlay()
 	// 서버에서만 콜리전 활성화
 	if(HasAuthority())
 	{
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		AreaSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
@@ -123,29 +123,56 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 }
 
+void AWeapon::SetWeaponState(EWeaponState InState)
+{
+	// TODO OnRep_WeaponState 호출로 리팩토링?
+	switch (InState)
+	{
+	case EWeaponState::EWS_Equipped:
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		
+		ShowPickupWidget(false);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		if(HasAuthority())
+		{
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		break;
+	}
+
+	// WeaponState 업데이트
+	WeaponState = InState;
+}
+
 void AWeapon::OnRep_WeaponState()
 {
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+	case EWeaponState::EWS_Dropped:
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
 }
 
-void AWeapon::SetWeaponState(EWeaponState InState)
+void AWeapon::Dropped()
 {
-	switch (InState)
-	{
-	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		break;
-	case EWeaponState::EWS_Dropped:
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		break;
-	}
-
-	// WeaponState 업데이트
-	WeaponState = InState;
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepRelative, true));
+	SetOwner(nullptr);
 }

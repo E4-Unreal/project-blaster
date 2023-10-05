@@ -70,22 +70,10 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if(Character == nullptr || WeaponToEquip == nullptr) return;
 
-	// Old Weapon 설정
+	// Drop Old Weapon
 	if(EquippedWeapon)
 	{
-		// TODO Drop Old Weapon
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Dropped);
-		EquippedWeapon->SetOwner(nullptr);
-	}
-	
-	const auto HandSocket = Character->GetMesh()->GetSocketByName(FName("weapon_r"));
-	if(HandSocket)
-	{
-		// New Weapon 설정
-		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
-		WeaponToEquip->SetOwner(Character);
-		
-		HandSocket->AttachActor(WeaponToEquip, Character->GetMesh());
+		EquippedWeapon->Dropped();
 	}
 
 	// EquippedWeapon 업데이트
@@ -97,11 +85,22 @@ void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if(EquippedWeapon)
 	{
+		// New Weapon
+		if(const auto HandSocket = Character->GetMesh()->GetSocketByName(FName("weapon_r")))
+		{
+			EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+			EquippedWeapon->SetOwner(Character);
+		
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
+
+		// Equipped
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}
 	else
 	{
+		// UnEquipped
 		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 		Character->bUseControllerRotationYaw = false;
 	}

@@ -144,6 +144,9 @@ void ABlasterCharacter::PlayEliminatedMontage()
 
 void ABlasterCharacter::ServerEliminate()
 {
+	if(Combat && Combat->EquippedWeapon)
+		Combat->EquippedWeapon->Dropped();
+	
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(
 		EliminatedTimer,
@@ -158,6 +161,7 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 	bIsEliminated = true;
 	// PlayEliminatedMontage는 Blaster Anim Instance> 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
 
+	// Dissolve Effect
 	if(DissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
@@ -167,6 +171,17 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 		StartDissolve();
 	}
 
+	// Disable Character Movement
+	GetCharacterMovement()->DisableMovement(); // Disable Character Move
+	GetCharacterMovement()->StopMovementImmediately(); // Disable Character Rotate
+	if(BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+
+	// Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::EliminatedTimerFinished()
