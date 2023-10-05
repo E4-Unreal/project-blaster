@@ -21,6 +21,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
+	virtual void Destroyed() override;
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
@@ -74,7 +75,7 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
 
-	// Turn In Place
+	/* Turn In Place */
 	float Yaw;
 	float InterpYaw;
 	float Pitch;
@@ -83,8 +84,8 @@ private:
 	ETurnInPlaceState TurnInPlaceState;
 	void TurnInPlace(float DeltaTime);
 
-	// 애님 몽타주
-	UPROPERTY(EditAnywhere, Category = Combat)
+	/* 애님 몽타주 */
+ 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
@@ -101,8 +102,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
-	// 체력
-	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	/* 체력 */
+ 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	float MaxHealth = 100.f;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = PlayerStats)
@@ -111,7 +112,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health(float OldHealth);
 
-	// Eliminated
+	/* Eliminated */
 	bool bIsEliminated = false;
 	FTimerHandle EliminatedTimer;
 
@@ -120,12 +121,22 @@ private:
 
 	void EliminatedTimerFinished();
 
-	// HUD
+	// ElimBot
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+	
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
+
+	/* HUD */
 	class ABlasterPlayerController* BlasterPlayerController;
 
 	void UpdateHUD_Health();
 
-	// Dissolve Effect
+	/* Dissolve Effect */
 	UPROPERTY(VisibleAnywhere)
 	UTimelineComponent* DissolveTimeline;
 	
