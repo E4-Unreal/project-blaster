@@ -25,9 +25,11 @@ public:
 	void PlayFireMontage(bool bIsAiming);
 	void PlayEliminatedMontage();
 
-	// Dead
+	// Eliminated
+	void ServerEliminate();
+	
 	UFUNCTION(NetMulticast, Reliable)
-	void Eliminate();
+	void MulticastEliminate();
 
 protected:
 	virtual void BeginPlay() override;
@@ -108,7 +110,14 @@ private:
 	UFUNCTION()
 	void OnRep_Health(float OldHealth);
 
+	// Eliminated
 	bool bIsEliminated = false;
+	FTimerHandle EliminatedTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float EliminatedDelay = 3.f;
+
+	void EliminatedTimerFinished();
 
 	// HUD
 	class ABlasterPlayerController* BlasterPlayerController;

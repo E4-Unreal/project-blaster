@@ -3,7 +3,6 @@
 
 #include "BlasterCharacter.h"
 
-#include "BlasterAnimInstance.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Weapon/Weapon.h"
@@ -29,6 +28,7 @@ ABlasterCharacter::ABlasterCharacter()
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	// Character Movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -139,9 +139,29 @@ void ABlasterCharacter::PlayEliminatedMontage()
 	}
 }
 
-void ABlasterCharacter::Eliminate_Implementation()
+void ABlasterCharacter::ServerEliminate()
+{
+	MulticastEliminate();
+	GetWorldTimerManager().SetTimer(
+		EliminatedTimer,
+		this,
+		&ThisClass::EliminatedTimerFinished,
+		EliminatedDelay
+	);
+}
+
+void ABlasterCharacter::MulticastEliminate_Implementation()
 {
 	bIsEliminated = true;
+	// PlayEliminatedMontage는 Blaster Anim Instance> 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
+}
+
+void ABlasterCharacter::EliminatedTimerFinished()
+{
+	if(ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void ABlasterCharacter::PlayHitReactMontage()
