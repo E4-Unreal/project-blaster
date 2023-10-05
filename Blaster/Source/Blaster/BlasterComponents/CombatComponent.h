@@ -20,8 +20,8 @@ public:
 	friend class ABlasterCharacter;
 	
 	UCombatComponent();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	void EquipWeapon(AWeapon* WeaponToEquip);
 
@@ -31,19 +31,19 @@ protected:
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
 
+	// Crosshairs
+	void TraceUnderCrosshair(FHitResult& TraceHitResult);
+	void SetHUDCrosshairs(float DeltaTime);
+	
 	// Fire
 	void FireButtonPressed(bool bPressed);
+	void Fire();
 
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
-
-	void TraceUnderCrosshair(FHitResult& TraceHitResult);
-
-	// HUD
-	void SetHUDCrosshairs(float DeltaTime);
 
 private:
 	ABlasterCharacter* Character;
@@ -53,16 +53,17 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
+	// Aim
 	UPROPERTY(Replicated)
 	bool bIsAiming;
+
+	void IsAimingUpdated(bool IsAiming);
 
 	UPROPERTY(EditAnywhere)
 	float BaseWalkSpeed;
 
 	UPROPERTY(EditAnywhere)
 	float AimWalkSpeed;
-
-	void UpdateIsAiming(bool IsAiming);
 
 	bool bIsFireButtonPressed;
 	
@@ -78,7 +79,7 @@ private:
 	float CrosshairsShootingFactor;
 	FHUDPackage HUDPackage;
 
-	// Aiming and FOV
+	// FOV
 	// TODO 제거?
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DefaultZoomedFOV = 30.f;
@@ -90,6 +91,14 @@ private:
 	float CurrentFOV;
 
 	void InterpFOV(float DeltaTime);
+
+	// 연사 기능
+	FTimerHandle FireTimer;
+	
+	bool bCanFire = true;
+	
+	void StartFireTimer();
+	void FireTimerFinished();
 	
 public:
 

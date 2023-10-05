@@ -97,6 +97,13 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
+
+	// 연사 기능
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float FireDelay = .15f;
+	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bIsAutomatic = true;
 	
 public:
 	void SetWeaponState(EWeaponState InState);
@@ -105,4 +112,8 @@ public:
 	// 조준 시 줌 인
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+
+	// 연사 기능
+	FORCEINLINE float GetFireDelay() const { return FireDelay; }
+	FORCEINLINE bool IsAutomatic() const { return bIsAutomatic; }
 };
