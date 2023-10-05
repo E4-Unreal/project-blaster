@@ -61,10 +61,13 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
-	if(BlasterPlayerController)
+	// Init HUD
+	UpdateHUD_Health();
+
+	// 데미지 이벤트
+	if(HasAuthority())
 	{
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::OnTakeAnyDamage_Event);
 	}
 }
 
@@ -279,6 +282,15 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 	}
 }
 
+void ABlasterCharacter::OnTakeAnyDamage_Event(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+	AController* InstigatedBy, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUD_Health();
+	if(Damage > 0)	
+		PlayHitReactMontage();
+}
+
 void ABlasterCharacter::TurnInPlace(float DeltaTime)
 {
 	if(Yaw > 90.f)
@@ -325,18 +337,12 @@ void ABlasterCharacter::HideCharacter()
 	}
 }
 
-void ABlasterCharacter::MulticastHit_Implementation()
+void ABlasterCharacter::OnRep_Health(float OldHealth)
 {
-	PlayHitReactMontage();
-}
+	UpdateHUD_Health();
 
-void ABlasterCharacter::OnRep_Health()
-{
-	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
-	if(BlasterPlayerController)
-	{
-		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
-	}
+	if(OldHealth > Health)
+		PlayHitReactMontage();
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -395,3 +401,11 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
 	}
 }
 
+void ABlasterCharacter::UpdateHUD_Health()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+	if(BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}

@@ -21,6 +21,10 @@ protected:
 
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	
+	// 데미지
+	UPROPERTY(EditAnywhere)
+	float Damage = 10.f;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -34,6 +38,7 @@ private:
 
 	UParticleSystemComponent* TracerComponent;
 
+	// 피격 효과
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
 

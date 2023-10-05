@@ -23,10 +23,6 @@ public:
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
-	
-	// 피격 이벤트
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
 
 protected:
 	virtual void BeginPlay() override;
@@ -44,6 +40,9 @@ protected:
 	void FireButtonReleased();
 	
 	void AimOffset(float DeltaTime);
+
+	UFUNCTION()
+	void OnTakeAnyDamage_Event(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -99,10 +98,12 @@ private:
 	float Health = 100.f;
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(float OldHealth);
 
 	// HUD
 	class ABlasterPlayerController* BlasterPlayerController;
+
+	void UpdateHUD_Health();
 	
 public:
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }

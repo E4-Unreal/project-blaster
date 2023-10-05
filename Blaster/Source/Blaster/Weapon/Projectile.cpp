@@ -68,6 +68,7 @@ void AProjectile::BeginPlay()
 		);
 	}
 
+	// 서버에서만 OnHit 이벤트 발생
 	if(HasAuthority())
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
@@ -77,11 +78,6 @@ void AProjectile::BeginPlay()
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
-	if(auto BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
-	{
-		BlasterCharacter->MulticastHit();
-	}
-	
 	Destroy();
 }
 
