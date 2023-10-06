@@ -6,36 +6,45 @@
 #include "Projectile.h"
 #include "Engine/SkeletalMeshSocket.h"
 
-void AProjectileWeapon::Fire(const FVector& HitTarget)
+void AProjectileWeapon::RequestFire(const FVector& HitTarget)
 {
-	Super::Fire(HitTarget);
+	Super::RequestFire(HitTarget);
 
-	// 서버에서만 스폰
-	if(!HasAuthority()) return;
-
-	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
+	// Muzzle Location
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	if(MuzzleFlashSocket)
+	const FVector MuzzleLocation = MuzzleFlashSocket == nullptr
+	? GetActorLocation()
+	: MuzzleFlashSocket->GetSocketLocation(GetWeaponMesh());
+
+	// Direction
+	const FVector Direction = HitTarget - MuzzleLocation;
+
+	// Spawn Bullet On Server
+	SpawnBullet(MuzzleLocation, Direction);
+}
+
+void AProjectileWeapon::SpawnBullet_Implementation(const FVector_NetQuantize& MuzzleLocation,
+	const FVector_NetQuantize& Direction)
+{
+	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
+	
+	if(ProjectileClass && InstigatorPawn)
 	{
-		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-		FVector DirectionToHitTarget = HitTarget - SocketTransform.GetLocation();
-		FRotator TargetRotation = DirectionToHitTarget.Rotation();
-		if(ProjectileClass && InstigatorPawn)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = InstigatorPawn;
+		const FRotator TargetRotation = Direction.Rotation();
+		
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetOwner();
+		SpawnParams.Instigator = InstigatorPawn;
 			
-			UWorld* World = GetWorld();
-			if(World)
-			{
-				World->SpawnActor<AProjectile>(
-					ProjectileClass,
-					SocketTransform.GetLocation(),
-					TargetRotation,
-					SpawnParams
-				);
-			}
+		UWorld* World = GetWorld();
+		if(World)
+		{
+			World->SpawnActor<AProjectile>(
+				ProjectileClass,
+				MuzzleLocation,
+				TargetRotation,
+				SpawnParams
+			);
 		}
 	}
 }

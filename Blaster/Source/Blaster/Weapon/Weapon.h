@@ -27,12 +27,16 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	void ShowPickupWidget(bool bShowWidget);
-	virtual void Fire(const FVector& HitTarget);
 	void Dropped();
 
-	/**
-	 * HUD 크로스헤어
-	 */
+	/* Fire */
+	// 클라이언트 측에서 필요한 작업을 마친 다음 서버 RPC 호출
+	virtual void RequestFire(const FVector& HitTarget);
+
+	// 멀티캐스트 RPC에서 사용
+	virtual void Fire();
+
+	/* HUD 크로스헤어 */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;
 	

@@ -242,22 +242,23 @@ void UCombatComponent::Fire()
 	bCanFire = false;
 
 	CrosshairsShootingFactor = .75f;
-	
-	ServerFire(HitTarget);
+
+	EquippedWeapon->RequestFire(HitTarget);
+	ServerFire();
 	StartFireTimer();
 }
 
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::ServerFire_Implementation()
 {
-	MulticastFire(TraceHitTarget);
+	MulticastFire();
 }
 
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+void UCombatComponent::MulticastFire_Implementation()
 {
 	if(EquippedWeapon == nullptr || Character == nullptr) return;
 	
 	Character->PlayFireMontage(bIsAiming);
-	EquippedWeapon->Fire(TraceHitTarget);
+	EquippedWeapon->Fire();
 }
 
 void UCombatComponent::StartFireTimer()

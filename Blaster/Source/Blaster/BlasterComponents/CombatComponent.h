@@ -40,10 +40,10 @@ protected:
 	void Fire();
 
 	UFUNCTION(Server, Reliable)
-	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
+	void ServerFire();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
+	void MulticastFire();
 
 private:
 	ABlasterCharacter* Character;

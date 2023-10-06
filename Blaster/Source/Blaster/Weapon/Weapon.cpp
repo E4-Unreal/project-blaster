@@ -76,7 +76,18 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::Fire(const FVector& HitTarget)
+void AWeapon::Dropped()
+{
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	WeaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepRelative, true));
+	SetOwner(nullptr);
+}
+
+void AWeapon::RequestFire(const FVector& HitTarget)
+{
+}
+
+void AWeapon::Fire()
 {
 	if(FireAnimation)
 	{
@@ -168,11 +179,4 @@ void AWeapon::OnRep_WeaponState()
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		break;
 	}
-}
-
-void AWeapon::Dropped()
-{
-	SetWeaponState(EWeaponState::EWS_Dropped);
-	WeaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepRelative, true));
-	SetOwner(nullptr);
 }
