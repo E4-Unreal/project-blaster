@@ -22,6 +22,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	virtual void Destroyed() override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);

@@ -133,6 +133,14 @@ void ABlasterCharacter::Destroyed()
 	}
 }
 
+void ABlasterCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Init HUD
+	UpdateHUD_Health();
+}
+
 void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
 {
 	if(Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
@@ -515,6 +523,8 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
 
 void ABlasterCharacter::UpdateHUD_Health()
 {
+	if(Controller == nullptr) return;
+	
 	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 	if(BlasterPlayerController)
 	{
