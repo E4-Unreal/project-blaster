@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "CharacterOverlay.generated.h"
 
+class UTextBlock;
+
 /**
  * 
  */
@@ -19,5 +21,8 @@ public:
 	class UProgressBar* HealthBar;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* HealthText;
+	UTextBlock* HealthText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ScoreText;
 };

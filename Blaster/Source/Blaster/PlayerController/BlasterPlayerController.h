@@ -11,10 +11,10 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	void SetHUDHealth(float Health, float MaxHealth);
+	virtual void ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass) override;
 	
-protected:
-	virtual void BeginPlay() override;
+	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDScore(float Score);
 
 private:
 	class ABlasterHUD* BlasterHUD;

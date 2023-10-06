@@ -20,6 +20,8 @@ struct FHUDPackage
 	FLinearColor CrosshairsColor;
 };
 
+class UCharacterOverlay;
+
 /**
  * 
  */
@@ -30,14 +32,15 @@ class BLASTER_API ABlasterHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
-
-	class UCharacterOverlay* CharacterOverlay;
+	void Initialize();
 
 protected:
-	virtual void BeginPlay() override;
 	void AddCharacterOverlay();
 
 private:
+	// 사용자 위젯
+	UCharacterOverlay* CharacterOverlay;
+	
 	// 크로스헤어
 	FHUDPackage HUDPackage;
 
@@ -52,4 +55,5 @@ private:
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }
+	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
 };
