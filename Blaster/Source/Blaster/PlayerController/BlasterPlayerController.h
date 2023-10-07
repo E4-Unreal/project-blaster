@@ -15,6 +15,7 @@ public:
 	
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
+	void SetHUDDefeats(int32 Defeats);
 
 private:
 	class ABlasterHUD* BlasterHUD;

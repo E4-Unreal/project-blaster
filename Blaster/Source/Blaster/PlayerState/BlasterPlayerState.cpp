@@ -4,22 +4,44 @@
 #include "BlasterPlayerState.h"
 
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(Controller == nullptr)
-		Controller = Cast<ABlasterPlayerController>(GetOwningController());
-	UpdateHUDScore();
+	// Server
+	Initialize();
+}
+
+void ABlasterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, Defeats);
 }
 
 void ABlasterPlayerState::ClientInitialize(AController* C)
 {
 	Super::ClientInitialize(C);
 
+	// Client
+	Initialize();
+}
+
+void ABlasterPlayerState::Initialize()
+{
 	if(Controller == nullptr)
 		Controller = Cast<ABlasterPlayerController>(GetOwningController());
+	UpdateHUDScore();
+	UpdateHUDDefeats();
+}
+
+void ABlasterPlayerState::AddToScore(float ScoreAmount)
+{
+	if(!HasAuthority()) return;
+	
+	SetScore(GetScore() + ScoreAmount);
 	UpdateHUDScore();
 }
 
@@ -31,12 +53,18 @@ void ABlasterPlayerState::UpdateHUDScore()
 	}
 }
 
-void ABlasterPlayerState::AddToScore(float ScoreAmount)
+void ABlasterPlayerState::AddToDefeats(int32 DefeatsAmount)
 {
 	if(!HasAuthority()) return;
-	
-	SetScore(GetScore() + ScoreAmount);
-	UpdateHUDScore();
+
+	Defeats += DefeatsAmount;
+	UpdateHUDDefeats();
+}
+
+void ABlasterPlayerState::UpdateHUDDefeats()
+{
+	if(Controller)
+		Controller->SetHUDDefeats(Defeats);
 }
 
 void ABlasterPlayerState::OnRep_Score()
@@ -44,4 +72,9 @@ void ABlasterPlayerState::OnRep_Score()
 	Super::OnRep_Score();
 
 	UpdateHUDScore();
+}
+
+void ABlasterPlayerState::OnRep_Defeats()
+{
+	UpdateHUDDefeats();
 }
