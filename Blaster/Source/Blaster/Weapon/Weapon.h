@@ -6,16 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
-UENUM(BlueprintType)
-enum class EWeaponState : uint8
-{
-	EWS_Initial UMETA(DisplayName = "Initial"),
-	EWS_Equipped UMETA(DisplayName = "Equipped"),
-	EWS_Dropped UMETA(DisplayName = "Dropped"),
-
-	EWS_MAX UMETA(DisplayName = "DefaultMAX")
-};
-
 UCLASS()
 class BLASTER_API AWeapon : public AActor
 {
@@ -25,9 +15,11 @@ public:
 	AWeapon();
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+	virtual void SetOwner(AActor* NewOwner) override;
+
+	void Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshComponent* InMesh);
+	void UnEquipped();
 	void ShowPickupWidget(bool bShowWidget);
-	void Dropped();
 
 	/* Fire */
 	// 클라이언트 측에서 필요한 작업을 마친 다음 서버 RPC 호출
@@ -52,8 +44,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsBottom;
 
+	/* HUD 총알 */
+	void InitializeHUD();
+	void UpdateHUDAmmo();
+
+	virtual void EnableCollisionAndPhysics(bool Enable);
+
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void OnRep_Owner() override;
 
 	UFUNCTION()
 	virtual void OnSphereOverlap(
@@ -80,12 +80,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
-	EWeaponState WeaponState;
-
-	UFUNCTION()
-	void OnRep_WeaponState();
-
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	class UWidgetComponent* PickupWidget;
 
@@ -95,6 +89,24 @@ private:
 	// TODO Projectile Weapon 클래스?
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
+	
+	// 총알
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon Properties")
+	int32 Ammo;
+
+	void SpendRound();
+	
+	UFUNCTION()
+	void OnRep_Ammo();
+
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	int32 MagCapacity;
+
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+	
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwningController;
 
 	// 조준 시 줌 인
 	UPROPERTY(EditAnywhere)
@@ -109,9 +121,11 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = Combat)
 	bool bIsAutomatic = true;
+
+	// For SetOwner && OnRep_Owner
+	void Initialize(AActor* NewOwner);
 	
 public:
-	void SetWeaponState(EWeaponState InState);
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 
 	// 조준 시 줌 인

@@ -6,27 +6,11 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Net/UnrealNetwork.h"
 
-void ABlasterPlayerState::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// Server
-	Initialize();
-}
-
 void ABlasterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, Defeats);
-}
-
-void ABlasterPlayerState::ClientInitialize(AController* C)
-{
-	Super::ClientInitialize(C);
-
-	// Client
-	Initialize();
 }
 
 void ABlasterPlayerState::Initialize()

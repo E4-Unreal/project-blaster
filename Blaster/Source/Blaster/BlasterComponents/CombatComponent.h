@@ -22,14 +22,16 @@ public:
 	UCombatComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
-	void EquipWeapon(AWeapon* WeaponToEquip);
+
+	// 서버에서만 호출할 것
+	void EquipWeapon(AWeapon* NewWeapon);
+	void DropEquippedWeapon();
 
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnRep_EquippedWeapon();
+	void OnRep_EquippedWeapon(AWeapon* OldWeapon);
 
 	// Crosshairs
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
@@ -47,6 +49,8 @@ protected:
 
 private:
 	ABlasterCharacter* Character;
+	USkeletalMeshSocket const* HandSocket;
+	
 	class ABlasterPlayerController* Controller;
 	class ABlasterHUD* HUD;
 

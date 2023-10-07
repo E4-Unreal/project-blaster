@@ -5,6 +5,7 @@
 
 #include "Casing.h"
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -64,8 +65,47 @@ void AWeapon::Tick(float DeltaTime)
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ThisClass, Ammo);
+}
 
-	DOREPLIFETIME(ThisClass, WeaponState);
+void AWeapon::SetOwner(AActor* NewOwner)
+{
+	Super::SetOwner(NewOwner);
+
+	Initialize(NewOwner);
+}
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+
+	Initialize(Owner);
+}
+
+void AWeapon::Initialize(AActor* NewOwner)
+{
+	// 멤버 변수 초기화
+	BlasterOwnerCharacter = NewOwner == nullptr ? nullptr : Cast<ABlasterCharacter>(NewOwner);
+	BlasterOwningController = BlasterOwnerCharacter == nullptr ? nullptr : Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller);
+
+	// HUD 초기화
+	if(BlasterOwningController)
+		InitializeHUD();
+}
+
+void AWeapon::Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshComponent* InMesh)
+{
+	ShowPickupWidget(false);
+
+	EnableCollisionAndPhysics(false);
+	InSocket->AttachActor(this, InMesh);
+}
+
+void AWeapon::UnEquipped()
+{
+	DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	EnableCollisionAndPhysics(true);
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)
@@ -76,24 +116,20 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::Dropped()
-{
-	SetWeaponState(EWeaponState::EWS_Dropped);
-	WeaponMesh->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepRelative, true));
-	SetOwner(nullptr);
-}
-
 void AWeapon::RequestFire(const FVector& HitTarget)
 {
+	// 자손 클래스에서 구현
 }
 
 void AWeapon::Fire()
 {
+	// 무기 애니메이션 재생
 	if(FireAnimation)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 
+	// 탄피 배출
 	if(CasingClass)
 	{
 		const USkeletalMeshSocket* AmmoEjectSocket = GetWeaponMesh()->GetSocketByName("AmmoEject");
@@ -112,6 +148,9 @@ void AWeapon::Fire()
 			}
 		}
 	}
+
+	// 총알 소비
+	SpendRound();
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -134,49 +173,54 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}
 }
 
-void AWeapon::SetWeaponState(EWeaponState InState)
+void AWeapon::EnableCollisionAndPhysics(bool Enable)
 {
-	// TODO OnRep_WeaponState 호출로 리팩토링?
-	switch (InState)
+	// Server
+	if(HasAuthority())
 	{
-	case EWeaponState::EWS_Equipped:
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		
-		ShowPickupWidget(false);
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		break;
-	case EWeaponState::EWS_Dropped:
-		if(HasAuthority())
-		{
-			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		break;
+		AreaSphere->SetCollisionEnabled(Enable ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 	}
 
-	// WeaponState 업데이트
-	WeaponState = InState;
-}
-
-void AWeapon::OnRep_WeaponState()
-{
-	switch (WeaponState)
+	// Server & Client
+	if(Enable)
 	{
-	case EWeaponState::EWS_Equipped:
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	else
+	{
 		ShowPickupWidget(false);
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		break;
-	case EWeaponState::EWS_Dropped:
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		break;
+	}
+}
+
+void AWeapon::SpendRound()
+{
+	--Ammo;
+	UpdateHUDAmmo();
+}
+
+void AWeapon::OnRep_Ammo()
+{
+	UpdateHUDAmmo();
+}
+
+void AWeapon::InitializeHUD()
+{
+	if(BlasterOwningController)
+	{
+		BlasterOwningController->SetHUDAmmo(Ammo);
+		BlasterOwningController->SetHUDMagCapacity(MagCapacity);
+	}
+}
+
+void AWeapon::UpdateHUDAmmo()
+{
+	if(BlasterOwningController)
+	{
+		BlasterOwningController->SetHUDAmmo(Ammo);
 	}
 }

@@ -28,4 +28,10 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* AmmoText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MagCapacityText;
 };

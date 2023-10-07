@@ -13,7 +13,8 @@ class BLASTER_API ABlasterPlayerState : public APlayerState
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void ClientInitialize(AController* C) override;
+
+	void Initialize();
 
 	void AddToScore(float ScoreAmount);
 	void UpdateHUDScore();
@@ -27,14 +28,9 @@ public:
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
-protected:
-	virtual void BeginPlay() override;
-
 private:
 	class ABlasterPlayerController* Controller;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
 	int32 Defeats;
-
-	void Initialize();
 };

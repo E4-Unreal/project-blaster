@@ -22,7 +22,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	virtual void Destroyed() override;
-	virtual void PossessedBy(AController* NewController) override;
+
+	/* Equip */
+	void Equipped();
+	void UnEquipped();
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
@@ -33,6 +36,9 @@ public:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
+
+	/* HUD */
+	void InitializeHUD();
 
 protected:
 	virtual void BeginPlay() override;
@@ -122,7 +128,7 @@ private:
 
 	void EliminatedTimerFinished();
 
-	// ElimBot
+	/* ElimBot */
 	UPROPERTY(VisibleAnywhere)
 	UParticleSystemComponent* ElimBotComponent;
 	
@@ -134,7 +140,6 @@ private:
 
 	/* HUD */
 	class ABlasterPlayerController* BlasterPlayerController;
-
 	void UpdateHUD_Health();
 
 	/* Dissolve Effect */

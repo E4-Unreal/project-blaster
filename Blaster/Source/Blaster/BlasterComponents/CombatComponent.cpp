@@ -7,7 +7,6 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Camera/CameraComponent.h"
-#include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -62,51 +61,78 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	}
 }
 
+/* Equip */
 
-
-// Equip
-
-void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
+// 서버에서만 호출할 것
+void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 {
-	if(Character == nullptr || WeaponToEquip == nullptr) return;
+	if(Character == nullptr || NewWeapon == nullptr || HandSocket == nullptr) return;
 
-	// Drop Old Weapon
-	if(EquippedWeapon)
+	// 레플리케이트된 변수 업데이트
+	AWeapon* OldWeapon = EquippedWeapon;
+	EquippedWeapon = NewWeapon;
+	
+	/* Old Weapon */
+	if(OldWeapon)
 	{
-		EquippedWeapon->Dropped();
+		OldWeapon->SetOwner(nullptr);
+		OldWeapon->UnEquipped();
+
+		// 기존 무기 장비 해제 시
+		if(NewWeapon == nullptr)
+			Character->UnEquipped();
 	}
 
-	// EquippedWeapon 업데이트
-	EquippedWeapon = WeaponToEquip;
-	OnRep_EquippedWeapon(); // TODO Setter?
-}
-
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if(EquippedWeapon)
+	/* New Weapon */
+	if(NewWeapon)
 	{
-		// New Weapon
-		if(const auto HandSocket = Character->GetMesh()->GetSocketByName(FName("weapon_r")))
-		{
-			EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-			EquippedWeapon->SetOwner(Character);
+		NewWeapon->SetOwner(Character);
+		NewWeapon->Equipped(HandSocket, Character->GetMesh());
 		
-			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-		}
-
-		// Equipped
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-	else
-	{
-		// UnEquipped
-		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
-		Character->bUseControllerRotationYaw = false;
+		// 무기가 없는 상태에서 새로운 무기 장착 시
+		if(OldWeapon == nullptr)
+			Character->Equipped();
 	}
 }
 
-// Crosshairs
+void UCombatComponent::OnRep_EquippedWeapon(AWeapon* OldWeapon)
+{
+	if(Character == nullptr) return;
+	AWeapon* NewWeapon = EquippedWeapon;
+	
+	/* Old Weapon */
+	if(OldWeapon)
+	{
+		OldWeapon->UnEquipped();
+
+		// 기존 무기 장비 해제 시
+		if(NewWeapon == nullptr)
+			Character->UnEquipped();
+	}
+
+	/* New Weapon */
+	if(NewWeapon)
+	{
+		NewWeapon->Equipped(HandSocket, Character->GetMesh());
+
+		// 무기가 없는 상태에서 새로운 무기 장착 시
+		if(OldWeapon == nullptr)
+			Character->Equipped();
+	}
+}
+
+void UCombatComponent::DropEquippedWeapon()
+{
+	if(EquippedWeapon == nullptr) return;
+	
+	EquippedWeapon->SetOwner(nullptr);
+	EquippedWeapon->UnEquipped(); // Server
+	EquippedWeapon = nullptr; // Client (OnRep_EquippedWeapon)
+
+	Character->UnEquipped();
+}
+
+/* Crosshairs */
 
 void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {

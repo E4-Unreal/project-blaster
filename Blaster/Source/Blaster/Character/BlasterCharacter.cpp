@@ -69,9 +69,6 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Init HUD
-	UpdateHUD_Health();
-
 	// 데미지 이벤트
 	if(HasAuthority())
 	{
@@ -120,6 +117,7 @@ void ABlasterCharacter::PostInitializeComponents()
 	if(Combat)
 	{
 		Combat->Character = this;
+		Combat->HandSocket = GetMesh()->GetSocketByName(FName("weapon_r"));
 	}
 }
 
@@ -133,12 +131,20 @@ void ABlasterCharacter::Destroyed()
 	}
 }
 
-void ABlasterCharacter::PossessedBy(AController* NewController)
+void ABlasterCharacter::Equipped()
 {
-	Super::PossessedBy(NewController);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = true;
+}
 
-	// Init HUD
-	UpdateHUD_Health();
+void ABlasterCharacter::UnEquipped()
+{
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationYaw = false;
+	
+	// HUD Weapon UI 파괴 혹은 지우기
+	if(BlasterPlayerController)
+		BlasterPlayerController->ClearHUDWeapon();
 }
 
 void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
@@ -165,8 +171,10 @@ void ABlasterCharacter::PlayEliminatedMontage()
 
 void ABlasterCharacter::ServerEliminate()
 {
-	if(Combat && Combat->EquippedWeapon)
-		Combat->EquippedWeapon->Dropped();
+	if(Combat)
+	{
+		Combat->DropEquippedWeapon();
+	}
 	
 	MulticastEliminate();
 	GetWorldTimerManager().SetTimer(
@@ -179,6 +187,7 @@ void ABlasterCharacter::ServerEliminate()
 
 void ABlasterCharacter::MulticastEliminate_Implementation()
 {
+	
 	bIsEliminated = true;
 	// PlayEliminatedMontage는 Blaster Anim Instance> 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
 
@@ -521,11 +530,16 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
 	}
 }
 
-void ABlasterCharacter::UpdateHUD_Health()
+void ABlasterCharacter::InitializeHUD()
 {
 	if(Controller == nullptr) return;
-	
 	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+
+	UpdateHUD_Health();
+}
+
+void ABlasterCharacter::UpdateHUD_Health()
+{
 	if(BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
