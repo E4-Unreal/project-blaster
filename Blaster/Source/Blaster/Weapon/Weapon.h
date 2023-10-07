@@ -50,6 +50,8 @@ public:
 
 	virtual void EnableCollisionAndPhysics(bool Enable);
 
+	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
+
 protected:
 	virtual void BeginPlay() override;
 

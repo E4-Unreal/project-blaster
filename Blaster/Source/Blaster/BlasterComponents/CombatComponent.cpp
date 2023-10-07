@@ -264,8 +264,8 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if(!bCanFire || EquippedWeapon == nullptr) return;
-	bCanFire = false;
+	// TODO 총알이 부족해서 사용 못 하는 것은 Weapon의 CanFire()에서 구현하는 게 나을 것 같다.
+	if(!CanFire()) return;
 
 	CrosshairsShootingFactor = .75f;
 
@@ -287,10 +287,18 @@ void UCombatComponent::MulticastFire_Implementation()
 	EquippedWeapon->Fire();
 }
 
+bool UCombatComponent::CanFire()
+{
+	if(EquippedWeapon == nullptr) return false;
+
+	return bCanFire && !EquippedWeapon->IsEmpty();
+}
+
 void UCombatComponent::StartFireTimer()
 {
 	if(EquippedWeapon == nullptr || Character == nullptr) return;
 
+	bCanFire = false;
 	Character->GetWorldTimerManager().SetTimer(
 		FireTimer,
 		this,

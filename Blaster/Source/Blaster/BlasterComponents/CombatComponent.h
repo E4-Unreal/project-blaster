@@ -100,6 +100,7 @@ private:
 	FTimerHandle FireTimer;
 	
 	bool bCanFire = true;
+	bool CanFire();
 	
 	void StartFireTimer();
 	void FireTimerFinished();

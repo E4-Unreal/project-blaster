@@ -199,7 +199,7 @@ void AWeapon::EnableCollisionAndPhysics(bool Enable)
 
 void AWeapon::SpendRound()
 {
-	--Ammo;
+	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	UpdateHUDAmmo();
 }
 
