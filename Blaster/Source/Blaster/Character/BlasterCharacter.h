@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/Interfaces/IInteractableWithCrosshairs.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
@@ -29,6 +30,7 @@ public:
 
 	// 애님 몽타주 재생
 	void PlayFireMontage(bool bIsAiming);
+	void PlayReloadMontage();
 	void PlayEliminatedMontage();
 
 	// Eliminated
@@ -54,6 +56,7 @@ protected:
 	void AimButtonReleased();
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void ReloadButtonPressed();
 	
 	void AimOffset(float DeltaTime);
 
@@ -76,7 +79,7 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* OldWeapon);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
 	UFUNCTION(Server, Reliable)
@@ -94,6 +97,9 @@ private:
 	/* 애님 몽타주 */
  	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* FireWeaponMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = true))
 	UAnimMontage* HitReactMontage;
@@ -174,6 +180,7 @@ public:
 	bool IsAiming() const;
 	AWeapon* GetEquippedWeapon();
 	FVector GetHitTarget() const;
+	ECombatState GetCombatState() const;
 
 	// Turn In Place
 	FORCEINLINE float GetYaw() const { return Yaw; }

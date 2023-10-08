@@ -29,6 +29,9 @@ public:
 	// 멀티캐스트 RPC에서 사용
 	virtual void Fire();
 
+	/* Reload */
+	void AddAmmo(const int32 AmmoAmount);
+
 	/* HUD 크로스헤어 */
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsCenter;
@@ -50,8 +53,6 @@ public:
 	void UpdateHUDAmmo();
 
 	virtual void EnableCollisionAndPhysics(bool Enable);
-
-	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -130,6 +131,13 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
+	/* Equip */
+	UPROPERTY(EditAnywhere, Category = Sound)
+	class USoundCue* EquipSound;
+
+	UPROPERTY(EditAnywhere, Category = Sound)
+	float StartTime = 0.f;
 	
 public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
@@ -142,5 +150,15 @@ public:
 	FORCEINLINE float GetFireDelay() const { return FireDelay; }
 	FORCEINLINE bool IsAutomatic() const { return bIsAutomatic; }
 
+	// 무기 정보
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
+
+	// Query
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	FORCEINLINE bool IsEmpty() const { return Ammo <= 0; }
+	FORCEINLINE bool IsFull() const { return Ammo == MagCapacity; }
+	FORCEINLINE bool CanFire() const { return !IsEmpty(); }
+	FORCEINLINE bool CanReload() const { return !IsFull(); }
 };

@@ -100,6 +100,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -159,6 +160,25 @@ void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bIsAiming ? FName("RifleIronSights") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayReloadMontage()
+{
+	if(Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		switch (Combat->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EW_AssaultRifle:
+			SectionName = "Rifle";
+			break;
+		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -301,13 +321,7 @@ void ABlasterCharacter::Jump()
 
 void ABlasterCharacter::EquipButtonPressed()
 {
-	if(Combat)
-	{
-		if(HasAuthority())
-			Combat->EquipWeapon(OverlappingWeapon);
-		else
-			ServerEquipButtonPressed();
-	}
+	ServerEquipButtonPressed();
 }
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
@@ -356,6 +370,12 @@ void ABlasterCharacter::FireButtonReleased()
 	{
 		Combat->FireButtonPressed(false);
 	}
+}
+
+void ABlasterCharacter::ReloadButtonPressed()
+{
+	if(Combat)
+		Combat->Reload();
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
@@ -516,6 +536,11 @@ AWeapon* ABlasterCharacter::GetEquippedWeapon()
 FVector ABlasterCharacter::GetHitTarget() const
 {
 	return Combat == nullptr ? FVector() : Combat->HitTarget;
+}
+
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	return Combat == nullptr ? ECombatState::ECS_MAX : Combat->CombatState;
 }
 
 void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)

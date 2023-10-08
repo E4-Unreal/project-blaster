@@ -9,7 +9,9 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Sound/SoundCue.h"
 
 AWeapon::AWeapon()
 {
@@ -98,6 +100,18 @@ void AWeapon::Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshCompone
 {
 	ShowPickupWidget(false);
 
+	if(EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquipSound,
+			InMesh->GetOwner()->GetActorLocation(),
+			1,
+			1,
+			StartTime
+			);
+	}
+
 	EnableCollisionAndPhysics(false);
 	InSocket->AttachActor(this, InMesh);
 }
@@ -151,6 +165,12 @@ void AWeapon::Fire()
 
 	// 총알 소비
 	SpendRound();
+}
+
+void AWeapon::AddAmmo(const int32 AmmoAmount)
+{
+	Ammo = FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity);
+	UpdateHUDAmmo();
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

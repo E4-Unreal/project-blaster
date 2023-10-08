@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/Weapon/WeaponTypes.h"
 #include "Components/ActorComponent.h"
@@ -28,6 +29,14 @@ public:
 	void EquipWeapon(AWeapon* NewWeapon);
 	void DropEquippedWeapon();
 
+	/* Reload */
+	void Reload();
+	// TODO InterruptReloading
+	
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
+	void HandleFinishReloading();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -47,6 +56,16 @@ protected:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastFire();
+
+	/* Reload */
+	UFUNCTION(Server, Reliable)
+	void ServerReload();
+
+	void HandleReload();
+
+	bool CanReload() const;
+
+	int32 GetAmountToReload();
 
 private:
 	ABlasterCharacter* Character;
@@ -121,6 +140,13 @@ private:
 	void InitializeCarriedAmmo();
 
 	void UpdateHUDCarriedAmmo();
+
+	/* Combat State */
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState = ECombatState::ECS_Unoccupied;
+
+	UFUNCTION()
+	void OnRep_CombatState(ECombatState OldState);
 	
 public:
 

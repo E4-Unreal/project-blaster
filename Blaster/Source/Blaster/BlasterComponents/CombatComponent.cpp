@@ -26,6 +26,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(ThisClass, EquippedWeapon);
 	DOREPLIFETIME(ThisClass, bIsAiming);
 	DOREPLIFETIME_CONDITION(ThisClass, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(ThisClass, CombatState);
 }
 
 void UCombatComponent::BeginPlay()
@@ -138,6 +139,103 @@ void UCombatComponent::DropEquippedWeapon()
 	EquippedWeapon = nullptr; // Client (OnRep_EquippedWeapon)
 
 	Character->UnEquipped();
+}
+
+void UCombatComponent::Reload()
+{
+	if(!CanReload()) return;
+
+	ServerReload();
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if(!CanReload()) return;
+
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::FinishReloading()
+{
+	if(Character == nullptr) return;
+
+	if(Character->HasAuthority())
+	{
+		// Carried Ammo에서 Weapon Ammo로 총알 이동
+		HandleFinishReloading();
+
+		// Reloading 상태 해제
+		CombatState = ECombatState::ECS_Unoccupied;
+
+		// 서버 플레이어의 Fire 입력 여부 확인
+		if(bIsFireButtonPressed && Character->IsLocallyControlled())
+		{
+			Fire();
+		}
+	}
+}
+
+void UCombatComponent::HandleFinishReloading()
+{
+	if(EquippedWeapon == nullptr) return;
+	
+	// Carried Ammo에서 Weapon Ammo로 총알 이동
+	if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		const int32 AmountToReload = GetAmountToReload();
+
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= AmountToReload;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		UpdateHUDCarriedAmmo();
+		
+		EquippedWeapon->AddAmmo(AmountToReload);
+	}
+}
+
+void UCombatComponent::OnRep_CombatState(ECombatState OldState)
+{
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	case ECombatState::ECS_Unoccupied:
+		if(OldState == ECombatState::ECS_Reloading)
+		{
+			// Carried Ammo에서 Weapon Ammo로 총알 이동
+			HandleFinishReloading();
+			
+			// 클라이언트 플레이어의 Fire 입력 여부 확인
+			if(bIsFireButtonPressed)
+			{
+				Fire();
+			}
+		}
+		break;
+	}
+}
+
+void UCombatComponent::HandleReload()
+{
+	Character->PlayReloadMontage();
+}
+
+bool UCombatComponent::CanReload() const
+{
+	if(EquippedWeapon == nullptr) return false;
+	
+	bool bCombatCanReload = CombatState != ECombatState::ECS_Reloading && CarriedAmmo > 0;
+	
+	return bCombatCanReload && EquippedWeapon->CanReload();
+}
+
+int32 UCombatComponent::GetAmountToReload()
+{
+	if(EquippedWeapon == nullptr) return 0;
+	
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	return FMath::Clamp(FMath::Min(RoomInMag, CarriedAmmo), 0, CarriedAmmo);
 }
 
 /* Crosshairs */
@@ -272,7 +370,6 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	// TODO 총알이 부족해서 사용 못 하는 것은 Weapon의 CanFire()에서 구현하는 게 나을 것 같다.
 	if(!CanFire()) return;
 
 	CrosshairsShootingFactor = .75f;
@@ -290,7 +387,7 @@ void UCombatComponent::ServerFire_Implementation()
 void UCombatComponent::MulticastFire_Implementation()
 {
 	if(EquippedWeapon == nullptr || Character == nullptr) return;
-	
+
 	Character->PlayFireMontage(bIsAiming);
 	EquippedWeapon->Fire();
 }
@@ -299,7 +396,21 @@ bool UCombatComponent::CanFire()
 {
 	if(EquippedWeapon == nullptr) return false;
 
-	return bCanFire && !EquippedWeapon->IsEmpty();
+	// 무기가 발사 불가능한 상태인 경우
+	if(!EquippedWeapon->CanFire())
+	{
+		// 재장전이 필요한 경우
+		if(EquippedWeapon->IsEmpty())
+		{
+			Reload();
+		}
+
+		return false;
+	}
+	
+	bool bCombatCanFire = bCanFire && CombatState == ECombatState::ECS_Unoccupied;
+
+	return bCombatCanFire;
 }
 
 void UCombatComponent::StartFireTimer()

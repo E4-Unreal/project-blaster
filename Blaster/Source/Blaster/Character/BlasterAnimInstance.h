@@ -70,6 +70,9 @@ private:
 	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
 	FTransform LeftHandTransform;
 
+	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
+	bool bUseAimOffset;
+
 	// Turn In Place
 	UPROPERTY(BlueprintReadOnly, Category = TurnInPlace, meta = (AllowPrivateAccess = "true"))
 	ETurnInPlaceState TurnInPlaceState;
@@ -84,4 +87,12 @@ private:
 	// Eliminated
 	UPROPERTY(BlueprintReadOnly, Category = Eliminated, meta = (AllowPrivateAccess = "true"))
 	bool bIsEliminated;
+
+	// 오른손 총구 조정
+	UPROPERTY(BlueprintReadOnly, Category = AimOffset, meta = (AllowPrivateAccess = "true"))
+	bool bUseTransformRightHand;
+
+	// FABRRIK
+	UPROPERTY(BlueprintReadOnly, Category = FABRIK, meta = (AllowPrivateAccess = "true"))
+	bool bUseFABRIK;
 };
