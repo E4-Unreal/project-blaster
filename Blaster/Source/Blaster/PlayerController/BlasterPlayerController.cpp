@@ -10,6 +10,52 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
+void ABlasterPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	// 주기적으로 서버 - 클라이언트 시간 동기화
+	if(IsLocalController())
+	{
+		CheckTimeSync(DeltaSeconds);
+		SetHUDTime();
+	}
+}
+
+void ABlasterPlayerController::SetHUDTime()
+{
+	const float SecondsLeft = MatchTime - GetServerTime();
+	const uint32 SecondsLeftInt = FMath::FloorToInt(SecondsLeft);
+
+	if(CountdownTimeInt != SecondsLeftInt)
+	{
+		CountdownTimeInt = SecondsLeftInt;
+		SetHUDCountdownTime(SecondsLeft);
+	}
+}
+
+void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
+{
+	TimeSyncRunningTime += DeltaSeconds;
+	if(TimeSyncRunningTime > TimeSyncFrequency)
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void ABlasterPlayerController::ServerRequestServerTime_Implementation(float ClientRequestTime)
+{
+	ClientReportServerTime(ClientRequestTime, GetWorld()->GetTimeSeconds());
+}
+
+void ABlasterPlayerController::ClientReportServerTime_Implementation(float ClientRequestTime, float ServerReportTime)
+{
+	const float RoundTripTime = GetWorld()->GetTimeSeconds() - ClientRequestTime;
+	float CurrentServerTime = ServerReportTime + 0.5f * RoundTripTime;
+	ClientServerDeltaTime = CurrentServerTime - GetWorld()->GetTimeSeconds();
+}
+
 void ABlasterPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
@@ -137,4 +183,28 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 		const FString DefeatsString = FString::Printf(TEXT("Defeats : %d"), Defeats);
 		BlasterHUD->GetCharacterOverlay()->DefeatsText->SetText(FText::FromString(DefeatsString));
 	}
+}
+
+void ABlasterPlayerController::SetHUDCountdownTime(float InCountdownTime)
+{
+	if(BlasterHUD == nullptr) return;
+
+	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
+	{
+		CharacterOverlay->SetCountdownTime(InCountdownTime);
+	}
+}
+
+void ABlasterPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+	if(IsLocalController())
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+float ABlasterPlayerController::GetServerTime()
+{
+	return HasAuthority() ? GetWorld()->GetTimeSeconds() : GetWorld()->GetTimeSeconds() + ClientServerDeltaTime;
 }

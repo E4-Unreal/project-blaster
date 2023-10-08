@@ -3,6 +3,7 @@
 
 #include "CharacterOverlay.h"
 
+#include "MatchTimerOverlay.h"
 #include "WeaponOverlay.h"
 
 void UCharacterOverlay::SetAmmo(int32 Ammo)
@@ -33,4 +34,10 @@ void UCharacterOverlay::HideWeaponOverlay()
 {
 	if(WeaponOverlay)
 		WeaponOverlay->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UCharacterOverlay::SetCountdownTime(float CountdownTime)
+{
+	if(MatchTimerOverlay)
+		MatchTimerOverlay->SetCountdownTime(CountdownTime);
 }

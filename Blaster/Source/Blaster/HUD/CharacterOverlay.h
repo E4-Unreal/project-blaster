@@ -17,6 +17,13 @@ class BLASTER_API UCharacterOverlay : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	// 사용자 위젯
+	UPROPERTY(meta = (BindWidget))
+	class UWeaponOverlay* WeaponOverlay;
+
+	UPROPERTY(meta = (BindWidget))
+	class UMatchTimerOverlay* MatchTimerOverlay;
+	
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthBar;
 
@@ -29,12 +36,13 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsText;
 
-	UPROPERTY(meta = (BindWidget))
-	class UWeaponOverlay* WeaponOverlay;
-
+	// Weapon Overlay
 	void SetAmmo(int32 Ammo);
 	void SetCarriedAmmo(int32 CarriedAmmo);
 	void SetMagCapacity(int32 MagCapacity);
 	void ShowWeaponOverlay();
 	void HideWeaponOverlay();
+
+	// Match Timer Overlay
+	void SetCountdownTime(float CountdownTime);
 };
