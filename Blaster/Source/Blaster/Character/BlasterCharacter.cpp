@@ -135,6 +135,9 @@ void ABlasterCharacter::Equipped()
 {
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	bUseControllerRotationYaw = true;
+
+	if(BlasterPlayerController)
+		BlasterPlayerController->ShowWeaponOverlay();
 }
 
 void ABlasterCharacter::UnEquipped()
@@ -144,7 +147,7 @@ void ABlasterCharacter::UnEquipped()
 	
 	// HUD Weapon UI 파괴 혹은 지우기
 	if(BlasterPlayerController)
-		BlasterPlayerController->ClearHUDWeapon();
+		BlasterPlayerController->HideWeaponOverlay();
 }
 
 void ABlasterCharacter::PlayFireMontage(bool bIsAiming)

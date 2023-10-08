@@ -30,8 +30,11 @@ public:
 	UTextBlock* DefeatsText;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* AmmoText;
+	class UWeaponOverlay* WeaponOverlay;
 
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* MagCapacityText;
+	void SetAmmo(int32 Ammo);
+	void SetCarriedAmmo(int32 CarriedAmmo);
+	void SetMagCapacity(int32 MagCapacity);
+	void ShowWeaponOverlay();
+	void HideWeaponOverlay();
 };

@@ -20,8 +20,10 @@ public:
 
 	// Weapon
 	void SetHUDAmmo(int32 Ammo);
+	void SetHUDCarriedAmmo(int32 CarriedAmmo);
 	void SetHUDMagCapacity(int32 MagCapacity);
-	void ClearHUDWeapon();
+	void HideWeaponOverlay();
+	void ShowWeaponOverlay();
 
 	// Player State
 	void SetHUDScore(float Score);

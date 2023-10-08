@@ -27,7 +27,7 @@ void ABlasterPlayerController::ClientSetHUD_Implementation(TSubclassOf<AHUD> New
 	if(BlasterHUD)
 	{
 		BlasterHUD->Initialize();
-		ClearHUDWeapon();
+		HideWeaponOverlay();
 	}
 }
 
@@ -61,44 +61,51 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 
 void ABlasterPlayerController::SetHUDAmmo(int32 Ammo)
 {
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if(BlasterHUD == nullptr) return;
 
-	bool bHUDValid = BlasterHUD
-	&& BlasterHUD->GetCharacterOverlay()
-	&& BlasterHUD->GetCharacterOverlay()->AmmoText;
-
-	if(bHUDValid)
+	if(BlasterHUD->GetCharacterOverlay())
 	{
-		const FString AmmoString = FString::Printf(TEXT("Ammo : %d"), Ammo);
-		BlasterHUD->GetCharacterOverlay()->AmmoText->SetText(FText::FromString(AmmoString));
+		BlasterHUD->GetCharacterOverlay()->SetAmmo(Ammo);
+	}
+}
+
+void ABlasterPlayerController::SetHUDCarriedAmmo(int32 CarriedAmmo)
+{
+	if(BlasterHUD == nullptr) return;
+
+	if(BlasterHUD->GetCharacterOverlay())
+	{
+		BlasterHUD->GetCharacterOverlay()->SetCarriedAmmo(CarriedAmmo);
 	}
 }
 
 void ABlasterPlayerController::SetHUDMagCapacity(int32 MagCapacity)
 {
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if(BlasterHUD == nullptr) return;
 
-	bool bHUDValid = BlasterHUD
-	&& BlasterHUD->GetCharacterOverlay()
-	&& BlasterHUD->GetCharacterOverlay()->MagCapacityText;
-
-	if(bHUDValid)
+	if(BlasterHUD->GetCharacterOverlay())
 	{
-		const FString MagCapacityString = FString::Printf(TEXT("MagCapacity : %d"), MagCapacity);
-		BlasterHUD->GetCharacterOverlay()->MagCapacityText->SetText(FText::FromString(MagCapacityString));
+		BlasterHUD->GetCharacterOverlay()->SetMagCapacity(MagCapacity);
 	}
 }
 
-void ABlasterPlayerController::ClearHUDWeapon()
+void ABlasterPlayerController::HideWeaponOverlay()
 {
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if(BlasterHUD == nullptr) return;
 
-	if(BlasterHUD && BlasterHUD->GetCharacterOverlay())
+	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
 	{
-		if(BlasterHUD->GetCharacterOverlay()->AmmoText)
-			BlasterHUD->GetCharacterOverlay()->AmmoText->SetText(FText::GetEmpty());
-		if(BlasterHUD->GetCharacterOverlay()->MagCapacityText)
-			BlasterHUD->GetCharacterOverlay()->MagCapacityText->SetText(FText::GetEmpty());
+		CharacterOverlay->HideWeaponOverlay();
+	}
+}
+
+void ABlasterPlayerController::ShowWeaponOverlay()
+{
+	if(BlasterHUD == nullptr) return;
+
+	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
+	{
+		CharacterOverlay->ShowWeaponOverlay();
 	}
 }
 
