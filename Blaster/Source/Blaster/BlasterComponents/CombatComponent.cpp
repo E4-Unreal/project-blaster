@@ -25,6 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(ThisClass, EquippedWeapon);
 	DOREPLIFETIME(ThisClass, bIsAiming);
+	DOREPLIFETIME_CONDITION(ThisClass, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::BeginPlay()
@@ -39,6 +40,11 @@ void UCombatComponent::BeginPlay()
 		{
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
+		}
+
+		if(Character->HasAuthority())
+		{
+			InitializeCarriedAmmo();
 		}
 	}
 }
@@ -88,6 +94,8 @@ void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 	{
 		NewWeapon->SetOwner(Character);
 		NewWeapon->Equipped(HandSocket, Character->GetMesh());
+		CarriedAmmo = CarriedAmmoMap.Contains(NewWeapon->GetWeaponType()) ? CarriedAmmoMap[NewWeapon->GetWeaponType()] : 0;
+		UpdateHUDCarriedAmmo();
 		
 		// 무기가 없는 상태에서 새로운 무기 장착 시
 		if(OldWeapon == nullptr)
@@ -314,6 +322,22 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	UpdateHUDCarriedAmmo();
+}
+
+void UCombatComponent::InitializeCarriedAmmo()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EW_AssaultRifle, StartingARAmmo);
+}
+
+void UCombatComponent::UpdateHUDCarriedAmmo()
+{
+	if(Controller)
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 }
 
 // Aim

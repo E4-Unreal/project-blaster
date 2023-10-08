@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WeaponTypes.h"
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
@@ -126,6 +127,9 @@ private:
 
 	// For SetOwner && OnRep_Owner
 	void Initialize(AActor* NewOwner);
+
+	UPROPERTY(EditAnywhere)
+	EWeaponType WeaponType;
 	
 public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
@@ -137,4 +141,6 @@ public:
 	// 연사 기능
 	FORCEINLINE float GetFireDelay() const { return FireDelay; }
 	FORCEINLINE bool IsAutomatic() const { return bIsAutomatic; }
+
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 };

@@ -7,5 +7,5 @@ enum class ETurnInPlaceState : uint8
 	ETIP_Right UMETA(DisplayName = "Turning Right"),
 	ETIP_NotTurning UMETA(DisplayName = "Not Turning"),
 
-	ETIP_MAX UMETA(DisplayName = "DefaultMax")
+	ETIP_MAX UMETA(DisplayName = "Default Max")
 };
