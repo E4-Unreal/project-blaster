@@ -24,6 +24,7 @@ struct FHUDPackage
 };
 
 class UCharacterOverlay;
+class UAnnouncementOverlay;
 
 /**
  * 
@@ -35,15 +36,23 @@ class BLASTER_API ABlasterHUD : public AHUD
 
 public:
 	virtual void DrawHUD() override;
-	void Initialize();
 
-protected:
 	void AddCharacterOverlay();
+	void AddAnnouncement();
 
 private:
 	// 사용자 위젯
 	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
+
+	UPROPERTY()
+	UAnnouncementOverlay* Announcement;
+
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
+
+	UPROPERTY(EditAnywhere, Category = Announcements)
+	TSubclassOf<UUserWidget> AnnouncementClass;
 	
 	// 크로스헤어
 	FHUDPackage HUDPackage;
@@ -53,10 +62,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CrosshairsSpreadMax = 16.f;
 
-	// 체력바
-	UPROPERTY(EditAnywhere, Category = PlayerStats)
-	TSubclassOf<UUserWidget> CharacterOverlayClass;
-
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }
 
@@ -64,4 +69,6 @@ public:
 	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
 	UWeaponOverlay* GetWeaponOverlay() const;
 	UMatchTimerOverlay* GetMatchTimerOverlay() const;
+
+	FORCEINLINE UAnnouncementOverlay* GetAnnouncement() const { return Announcement; }
 };

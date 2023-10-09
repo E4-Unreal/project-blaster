@@ -3,6 +3,7 @@
 
 #include "BlasterHUD.h"
 
+#include "AnnouncementOverlay.h"
 #include "CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
 
@@ -49,24 +50,33 @@ void ABlasterHUD::DrawHUD()
 	}
 }
 
-void ABlasterHUD::Initialize()
+void ABlasterHUD::AddCharacterOverlay()
 {
 	if(CharacterOverlay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%hs: Already Initialized"), __FUNCTION__);
+		UE_LOG(LogTemp, Warning, TEXT("%hs: Character Overlay is already added"), __FUNCTION__);
 		return;
 	}
 	
-	AddCharacterOverlay();
+	if(GetOwningPlayerController() && CharacterOverlayClass)
+	{
+		CharacterOverlay = CreateWidget<UCharacterOverlay>(GetOwningPlayerController(), CharacterOverlayClass);
+		CharacterOverlay->AddToViewport();
+	}
 }
 
-void ABlasterHUD::AddCharacterOverlay()
+void ABlasterHUD::AddAnnouncement()
 {
-	APlayerController* PlayerController = GetOwningPlayerController();
-	if(PlayerController && CharacterOverlayClass)
+	if(Announcement)
 	{
-		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
-		CharacterOverlay->AddToViewport();
+		UE_LOG(LogTemp, Warning, TEXT("%hs: Announcement is already added"), __FUNCTION__);
+		return;
+	}
+	
+	if(GetOwningPlayerController() && AnnouncementClass)
+	{
+		Announcement = CreateWidget<UAnnouncementOverlay>(GetOwningPlayerController(), AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }
 

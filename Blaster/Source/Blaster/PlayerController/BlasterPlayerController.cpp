@@ -4,6 +4,8 @@
 #include "BlasterPlayerController.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/HUD/AnnouncementOverlay.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
 #include "Blaster/HUD/MatchTimerOverlay.h"
@@ -12,6 +14,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::Tick(float DeltaSeconds)
@@ -22,7 +25,7 @@ void ABlasterPlayerController::Tick(float DeltaSeconds)
 	if(IsLocalController())
 	{
 		CheckTimeSync(DeltaSeconds);
-		UpdateCountdownTime();
+		UpdateHUD_Countdown();
 	}
 }
 
@@ -39,6 +42,7 @@ void ABlasterPlayerController::ReceivedPlayer()
 	if(IsLocalController())
 	{
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+		ServerRequestMatchInfo();
 	}
 }
 
@@ -96,41 +100,86 @@ float ABlasterPlayerController::GetServerTime()
 
 /* Match 상태 */
 
+void ABlasterPlayerController::ServerRequestMatchInfo_Implementation()
+{
+	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	if(GameMode)
+	{
+		SetMatchState(GameMode->GetMatchState());
+		LevelStartingTime = GameMode->LevelStartingTime;
+		MatchTime = GameMode->MatchTime;
+		WarmupTime = GameMode->WarmupTime;
+		
+		ClientReportMatchInfo(LevelStartingTime, MatchTime, WarmupTime);
+	}
+}
+
+void ABlasterPlayerController::ClientReportMatchInfo_Implementation(float ServerLevelStartingTime,
+	float ServerMatchTime, float ServerWarmupTime)
+{
+	LevelStartingTime = ServerLevelStartingTime;
+	MatchTime = ServerMatchTime;
+	WarmupTime = ServerWarmupTime;
+}
+
 void ABlasterPlayerController::SetMatchState(FName State)
 {
+	if(MatchState == State) return;
+	
 	MatchState = State;
 
+	// 서버 플레이어 컨트롤러 설정
 	if(!IsLocalController()) return;
 
-	if(MatchState == MatchState::InProgress)
+	HandleMatchStates();
+}
+
+void ABlasterPlayerController::OnRep_MatchState()
+{
+	HandleMatchStates();
+}
+
+void ABlasterPlayerController::HandleMatchStates()
+{
+	if(MatchState == MatchState::WaitingToStart)
+	{
+		HandleMatchIsWaitingToStart();
+	}
+	else if(MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
 	}
 }
 
-void ABlasterPlayerController::OnRep_MatchState()
+void ABlasterPlayerController::HandleMatchIsWaitingToStart()
 {
-	if(MatchState == MatchState::InProgress)
+	if(BlasterHUD)
 	{
-		HandleMatchHasStarted();
+		BlasterHUD->AddAnnouncement();
 	}
 }
 
 void ABlasterPlayerController::HandleMatchHasStarted()
 {
-	SetHUD_All();
+	if(BlasterHUD)
+	{
+		if(BlasterHUD->GetAnnouncement())
+		{
+			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Hidden);
+		}
+		
+		BlasterHUD->AddCharacterOverlay();
+		UpdateHUD_All();
+	}
 }
 
 /* HUD */
 
-void ABlasterPlayerController::SetHUD_All()
+void ABlasterPlayerController::UpdateHUD_All()
 {
-	// HUD 초기화
-	if(BlasterHUD)
-	{
-		BlasterHUD->Initialize();
-	}
-
+	// BlasterPlayerController
+	UpdateHUD_Countdown();
+	
 	if(BlasterCharacter)
 	{
 		BlasterCharacter->UpdateHUD_All();
@@ -232,21 +281,40 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 
 /* Match Timer Overlay */
 
-void ABlasterPlayerController::UpdateCountdownTime()
+void ABlasterPlayerController::UpdateHUD_Countdown()
 {
-	const float SecondsLeft = MatchTime - GetServerTime();
-	const uint32 SecondsLeftInt = FMath::FloorToInt(SecondsLeft);
-
+	// TODO 리팩토링
+	// 매치 상태에 따른 남은 시간 계산
+	float CountdownTime = 0.f;
+	if(MatchState == MatchState::WaitingToStart)
+		CountdownTime = WarmupTime - (GetServerTime() - LevelStartingTime);
+	else if(MatchState == MatchState::InProgress)
+		CountdownTime = WarmupTime + MatchTime - (GetServerTime() - LevelStartingTime);
+	
+	const uint32 SecondsLeftInt = FMath::FloorToInt(CountdownTime);
 	if(CountdownTimeInt != SecondsLeftInt)
 	{
 		CountdownTimeInt = SecondsLeftInt;
-		SetHUDCountdownTime(SecondsLeft);
+
+		// TODO BlasterHUD에 Current Overlay 변수로 사용하는 건 어떨까?
+		// 매치 상태에 따라 사용중인 사용자 위젯에 남은 시간 업데이트
+		if(MatchState == MatchState::WaitingToStart)
+			SetHUD_WarmupCountdown(CountdownTime);
+		else if(MatchState == MatchState::InProgress)
+			SetHUD_MatchCountdown(CountdownTime);
 	}
 }
 
-void ABlasterPlayerController::SetHUDCountdownTime(float InCountdownTime) const
+void ABlasterPlayerController::SetHUD_WarmupCountdown(float CountdownTime) const
+{
+	if(BlasterHUD == nullptr || BlasterHUD->GetAnnouncement() == nullptr || BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay() == nullptr) return;
+
+	BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
+}
+
+void ABlasterPlayerController::SetHUD_MatchCountdown(float CountdownTime) const
 {
 	if(BlasterHUD == nullptr || BlasterHUD->GetMatchTimerOverlay() == nullptr) return;
 
-	BlasterHUD->GetMatchTimerOverlay()->SetCountdownTime(InCountdownTime);
+	BlasterHUD->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
 }
