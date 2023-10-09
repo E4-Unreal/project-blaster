@@ -14,16 +14,15 @@ class BLASTER_API UMatchTimerOverlay : public UUserWidget
 {
 	GENERATED_BODY()
 
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 CountdownMinutes;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 CountdownSeconds;
-
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float CountdownTime;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	int32 CountdownMinutes;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	int32 CountdownSeconds;
 
 public:
 	void SetCountdownTime(float InCountdownTime);

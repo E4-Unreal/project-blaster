@@ -3,41 +3,14 @@
 
 #include "CharacterOverlay.h"
 
-#include "MatchTimerOverlay.h"
-#include "WeaponOverlay.h"
-
-void UCharacterOverlay::SetAmmo(int32 Ammo)
+void UCharacterOverlay::SetHealth(const float InHealth)
 {
-	if(WeaponOverlay)
-		WeaponOverlay->Ammo = Ammo;
+	Health = InHealth;
+	HealthRatio = Health / MaxHealth;
 }
 
-void UCharacterOverlay::SetCarriedAmmo(int32 CarriedAmmo)
+void UCharacterOverlay::SetMaxHealth(const float InMaxHealth)
 {
-	if(WeaponOverlay)
-		WeaponOverlay->CarriedAmmo = CarriedAmmo;
-}
-
-void UCharacterOverlay::SetMagCapacity(int32 MagCapacity)
-{
-	if(WeaponOverlay)
-		WeaponOverlay->MagCapacity = MagCapacity;
-}
-
-void UCharacterOverlay::ShowWeaponOverlay()
-{
-	if(WeaponOverlay)
-		WeaponOverlay->SetVisibility(ESlateVisibility::Visible);
-}
-
-void UCharacterOverlay::HideWeaponOverlay()
-{
-	if(WeaponOverlay)
-		WeaponOverlay->SetVisibility(ESlateVisibility::Hidden);
-}
-
-void UCharacterOverlay::SetCountdownTime(float CountdownTime)
-{
-	if(MatchTimerOverlay)
-		MatchTimerOverlay->SetCountdownTime(CountdownTime);
+	MaxHealth = InMaxHealth;
+	HealthRatio = Health / MaxHealth;
 }

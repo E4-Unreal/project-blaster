@@ -51,6 +51,12 @@ void ABlasterHUD::DrawHUD()
 
 void ABlasterHUD::Initialize()
 {
+	if(CharacterOverlay)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%hs: Already Initialized"), __FUNCTION__);
+		return;
+	}
+	
 	AddCharacterOverlay();
 }
 
@@ -87,4 +93,14 @@ void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, 
 		1.f,
 		CrosshairsColor
 	);
+}
+
+UWeaponOverlay* ABlasterHUD::GetWeaponOverlay() const
+{
+	return CharacterOverlay == nullptr ? nullptr : CharacterOverlay->GetWeaponOverlay();
+}
+
+UMatchTimerOverlay* ABlasterHUD::GetMatchTimerOverlay() const
+{
+	return CharacterOverlay == nullptr ? nullptr : CharacterOverlay->GetMatchTimerOverlay();
 }

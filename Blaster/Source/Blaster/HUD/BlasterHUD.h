@@ -6,6 +6,9 @@
 #include "GameFramework/HUD.h"
 #include "BlasterHUD.generated.h"
 
+class UMatchTimerOverlay;
+class UWeaponOverlay;
+
 USTRUCT(BlueprintType)
 struct FHUDPackage
 {
@@ -39,6 +42,7 @@ protected:
 
 private:
 	// 사용자 위젯
+	UPROPERTY()
 	UCharacterOverlay* CharacterOverlay;
 	
 	// 크로스헤어
@@ -55,5 +59,9 @@ private:
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }
+
+	// 사용자 위젯 Getter
 	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
+	UWeaponOverlay* GetWeaponOverlay() const;
+	UMatchTimerOverlay* GetMatchTimerOverlay() const;
 };

@@ -7,6 +7,8 @@
 #include "CharacterOverlay.generated.h"
 
 class UTextBlock;
+class UWeaponOverlay;
+class UMatchTimerOverlay;
 
 /**
  * 
@@ -17,32 +19,34 @@ class BLASTER_API UCharacterOverlay : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// 사용자 위젯
-	UPROPERTY(meta = (BindWidget))
-	class UWeaponOverlay* WeaponOverlay;
-
-	UPROPERTY(meta = (BindWidget))
-	class UMatchTimerOverlay* MatchTimerOverlay;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* HealthBar;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* HealthText;
-
+	// TODO Player State Overlay
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreText;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsText;
 
-	// Weapon Overlay
-	void SetAmmo(int32 Ammo);
-	void SetCarriedAmmo(int32 CarriedAmmo);
-	void SetMagCapacity(int32 MagCapacity);
-	void ShowWeaponOverlay();
-	void HideWeaponOverlay();
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	float Health;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	float MaxHealth;
 
-	// Match Timer Overlay
-	void SetCountdownTime(float CountdownTime);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	float HealthRatio;
+		
+	// 자식 사용자 위젯
+	UPROPERTY(meta = (BindWidget))
+	UWeaponOverlay* WeaponOverlay;
+
+	UPROPERTY(meta = (BindWidget))
+	UMatchTimerOverlay* MatchTimerOverlay;
+
+public:
+	FORCEINLINE UWeaponOverlay* GetWeaponOverlay() const { return WeaponOverlay; }
+	FORCEINLINE UMatchTimerOverlay* GetMatchTimerOverlay() const { return MatchTimerOverlay; }
+
+	void SetHealth(const float InHealth);
+	void SetMaxHealth(const float InMaxHealth);
 };

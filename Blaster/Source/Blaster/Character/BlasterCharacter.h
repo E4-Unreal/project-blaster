@@ -40,7 +40,7 @@ public:
 	void MulticastEliminate();
 
 	/* HUD */
-	void InitializeHUD();
+	void UpdateHUD_All();
 
 protected:
 	virtual void BeginPlay() override;
@@ -147,6 +147,7 @@ private:
 	/* HUD */
 	class ABlasterPlayerController* BlasterPlayerController;
 	void UpdateHUD_Health();
+	void UpdateHUD_MaxHealth();
 
 	/* Dissolve Effect */
 	UPROPERTY(VisibleAnywhere)

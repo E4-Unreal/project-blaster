@@ -12,34 +12,17 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 	GENERATED_BODY()
 public:
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void AcknowledgePossession(APawn* P) override;
 	virtual void ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass) override;
 	virtual void BeginPlayingState() override;
-
-	/* Set HUD */
-	// Character
-	void SetHUDHealth(float Health, float MaxHealth);
-
-	// Weapon
-	void SetHUDAmmo(int32 Ammo);
-	void SetHUDCarriedAmmo(int32 CarriedAmmo);
-	void SetHUDMagCapacity(int32 MagCapacity);
-	void HideWeaponOverlay();
-	void ShowWeaponOverlay();
-
-	// Player State
-	void SetHUDScore(float Score);
-	void SetHUDDefeats(int32 Defeats);
-
-	// Match State
-	void SetHUDCountdownTime(float InCountdownTime);
 
 	/* 서버 - 클라이언트 시간 동기화 */
 	virtual void ReceivedPlayer() override;
 	virtual float GetServerTime();
 
 protected:
-	void SetHUDTime();
+	void UpdateCountdownTime();
 
 	/* 서버 - 클라이언트 시간 동기화 */
 	UPROPERTY(EditAnywhere, Category = Time)
@@ -62,7 +45,42 @@ private:
 	class ABlasterCharacter* BlasterCharacter;
 	class ABlasterHUD* BlasterHUD;
 	class ABlasterPlayerState* BlasterPlayerState;
-
+	
+	/* Match 상태 */
 	float MatchTime = 120.f; // TODO GameState로 이동?
 	uint32 CountdownTimeInt = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	// TODO GameMode 이벤트 바인딩?
+	void HandleMatchHasStarted();
+
+public:
+	/* Set HUD */
+	void SetHUD_All();
+	
+	// Character
+	void SetHUDHealth(float Health);
+	void SetHUDMaxHealth(float MaxHealth);
+
+	// Weapon
+	void SetHUDAmmo(int32 Ammo);
+	void SetHUDCarriedAmmo(int32 CarriedAmmo);
+	void SetHUDMagCapacity(int32 MagCapacity);
+	void HideWeaponOverlay() const;
+	void ShowWeaponOverlay() const;
+
+	// Player State
+	void SetHUDScore(float Score);
+	void SetHUDDefeats(int32 Defeats);
+
+	// Match State
+	void SetHUDCountdownTime(float InCountdownTime) const;
+	
+	/* Match 상태 */
+	void SetMatchState(FName State);
 };

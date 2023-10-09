@@ -14,13 +14,13 @@ class BLASTER_API ABlasterPlayerState : public APlayerState
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	void Initialize();
+	void UpdateHUD_All();
 
 	void AddToScore(float ScoreAmount);
-	void UpdateHUDScore();
+	void UpdateHUD_Score();
 
 	void AddToDefeats(int32 DefeatsAmount);
-	void UpdateHUDDefeats();
+	void UpdateHUD_Defeats();
 
 	// 레플리케이션 노티파이
 	virtual void OnRep_Score() override;

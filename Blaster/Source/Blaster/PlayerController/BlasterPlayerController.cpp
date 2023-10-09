@@ -6,9 +6,13 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
+#include "Blaster/HUD/MatchTimerOverlay.h"
+#include "Blaster/HUD/WeaponOverlay.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/GameMode.h"
+#include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::Tick(float DeltaSeconds)
 {
@@ -18,20 +22,42 @@ void ABlasterPlayerController::Tick(float DeltaSeconds)
 	if(IsLocalController())
 	{
 		CheckTimeSync(DeltaSeconds);
-		SetHUDTime();
+		UpdateCountdownTime();
 	}
 }
 
-void ABlasterPlayerController::SetHUDTime()
+void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	const float SecondsLeft = MatchTime - GetServerTime();
-	const uint32 SecondsLeftInt = FMath::FloorToInt(SecondsLeft);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	if(CountdownTimeInt != SecondsLeftInt)
+	DOREPLIFETIME(ThisClass, MatchState);
+}
+
+void ABlasterPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+	if(IsLocalController())
 	{
-		CountdownTimeInt = SecondsLeftInt;
-		SetHUDCountdownTime(SecondsLeft);
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 	}
+}
+
+void ABlasterPlayerController::AcknowledgePossession(APawn* P)
+{
+	Super::AcknowledgePossession(P);
+
+	BlasterCharacter = Cast<ABlasterCharacter>(P);
+	if(BlasterCharacter)
+		BlasterCharacter->UpdateHUD_All();
+}
+
+void ABlasterPlayerController::BeginPlayingState()
+{
+	Super::BeginPlayingState();
+
+	BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+	if(BlasterPlayerState)
+		BlasterPlayerState->UpdateHUD_All();
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaSeconds)
@@ -56,104 +82,123 @@ void ABlasterPlayerController::ClientReportServerTime_Implementation(float Clien
 	ClientServerDeltaTime = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }
 
-void ABlasterPlayerController::AcknowledgePossession(APawn* P)
-{
-	Super::AcknowledgePossession(P);
-
-	BlasterCharacter = Cast<ABlasterCharacter>(P);
-	if(BlasterCharacter)
-		BlasterCharacter->InitializeHUD();
-}
-
 void ABlasterPlayerController::ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass)
 {
 	Super::ClientSetHUD_Implementation(NewHUDClass);
 
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+}
+
+float ABlasterPlayerController::GetServerTime()
+{
+	return HasAuthority() ? GetWorld()->GetTimeSeconds() : GetWorld()->GetTimeSeconds() + ClientServerDeltaTime;
+}
+
+/* Match 상태 */
+
+void ABlasterPlayerController::SetMatchState(FName State)
+{
+	MatchState = State;
+
+	if(!IsLocalController()) return;
+
+	if(MatchState == MatchState::InProgress)
+	{
+		HandleMatchHasStarted();
+	}
+}
+
+void ABlasterPlayerController::OnRep_MatchState()
+{
+	if(MatchState == MatchState::InProgress)
+	{
+		HandleMatchHasStarted();
+	}
+}
+
+void ABlasterPlayerController::HandleMatchHasStarted()
+{
+	SetHUD_All();
+}
+
+/* HUD */
+
+void ABlasterPlayerController::SetHUD_All()
+{
+	// HUD 초기화
 	if(BlasterHUD)
 	{
 		BlasterHUD->Initialize();
-		HideWeaponOverlay();
 	}
-}
 
-void ABlasterPlayerController::BeginPlayingState()
-{
-	Super::BeginPlayingState();
-
-	BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
-	if(BlasterPlayerState)
-		BlasterPlayerState->Initialize();
-}
-
-void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
-{
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-
-	bool bHUDValid = BlasterHUD
-	&& BlasterHUD->GetCharacterOverlay()
-	&& BlasterHUD->GetCharacterOverlay()->HealthBar
-	&& BlasterHUD->GetCharacterOverlay()->HealthText;
-	
-	if(bHUDValid)
+	if(BlasterCharacter)
 	{
-		const float HealthPercent = Health / MaxHealth;
-		BlasterHUD->GetCharacterOverlay()->HealthBar->SetPercent(HealthPercent);
-
-		const FString HealthString = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
-		BlasterHUD->GetCharacterOverlay()->HealthText->SetText(FText::FromString(HealthString));
+		BlasterCharacter->UpdateHUD_All();
 	}
+
+	if(BlasterPlayerState)
+	{
+		BlasterPlayerState->UpdateHUD_All();
+	}
+
+	// Hide Overlays
+	HideWeaponOverlay();
 }
+
+/* Character Overlay */
+
+void ABlasterPlayerController::SetHUDHealth(float Health)
+{
+	if(BlasterHUD == nullptr || BlasterHUD->GetCharacterOverlay() == nullptr) return;
+	
+	BlasterHUD->GetCharacterOverlay()->SetHealth(Health);
+}
+
+void ABlasterPlayerController::SetHUDMaxHealth(float MaxHealth)
+{
+	if(BlasterHUD == nullptr || BlasterHUD->GetCharacterOverlay() == nullptr) return;
+	
+	BlasterHUD->GetCharacterOverlay()->SetMaxHealth(MaxHealth);
+}
+
+/* Weapon Overlay */
 
 void ABlasterPlayerController::SetHUDAmmo(int32 Ammo)
 {
-	if(BlasterHUD == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
-	if(BlasterHUD->GetCharacterOverlay())
-	{
-		BlasterHUD->GetCharacterOverlay()->SetAmmo(Ammo);
-	}
+	BlasterHUD->GetWeaponOverlay()->Ammo = Ammo;
 }
 
 void ABlasterPlayerController::SetHUDCarriedAmmo(int32 CarriedAmmo)
 {
-	if(BlasterHUD == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
-	if(BlasterHUD->GetCharacterOverlay())
-	{
-		BlasterHUD->GetCharacterOverlay()->SetCarriedAmmo(CarriedAmmo);
-	}
+	BlasterHUD->GetWeaponOverlay()->CarriedAmmo = CarriedAmmo;
 }
 
 void ABlasterPlayerController::SetHUDMagCapacity(int32 MagCapacity)
 {
-	if(BlasterHUD == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
-	if(BlasterHUD->GetCharacterOverlay())
-	{
-		BlasterHUD->GetCharacterOverlay()->SetMagCapacity(MagCapacity);
-	}
+	BlasterHUD->GetWeaponOverlay()->MagCapacity = MagCapacity;
 }
 
-void ABlasterPlayerController::HideWeaponOverlay()
+void ABlasterPlayerController::HideWeaponOverlay() const
 {
-	if(BlasterHUD == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
-	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
-	{
-		CharacterOverlay->HideWeaponOverlay();
-	}
+	BlasterHUD->GetWeaponOverlay()->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void ABlasterPlayerController::ShowWeaponOverlay()
+void ABlasterPlayerController::ShowWeaponOverlay() const
 {
-	if(BlasterHUD == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
-	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
-	{
-		CharacterOverlay->ShowWeaponOverlay();
-	}
+	BlasterHUD->GetWeaponOverlay()->SetVisibility(ESlateVisibility::Visible);
 }
+
+/* Player State Overlay */
 
 void ABlasterPlayerController::SetHUDScore(float Score)
 {
@@ -185,26 +230,23 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	}
 }
 
-void ABlasterPlayerController::SetHUDCountdownTime(float InCountdownTime)
-{
-	if(BlasterHUD == nullptr) return;
+/* Match Timer Overlay */
 
-	if(UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay())
+void ABlasterPlayerController::UpdateCountdownTime()
+{
+	const float SecondsLeft = MatchTime - GetServerTime();
+	const uint32 SecondsLeftInt = FMath::FloorToInt(SecondsLeft);
+
+	if(CountdownTimeInt != SecondsLeftInt)
 	{
-		CharacterOverlay->SetCountdownTime(InCountdownTime);
+		CountdownTimeInt = SecondsLeftInt;
+		SetHUDCountdownTime(SecondsLeft);
 	}
 }
 
-void ABlasterPlayerController::ReceivedPlayer()
+void ABlasterPlayerController::SetHUDCountdownTime(float InCountdownTime) const
 {
-	Super::ReceivedPlayer();
-	if(IsLocalController())
-	{
-		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
-	}
-}
+	if(BlasterHUD == nullptr || BlasterHUD->GetMatchTimerOverlay() == nullptr) return;
 
-float ABlasterPlayerController::GetServerTime()
-{
-	return HasAuthority() ? GetWorld()->GetTimeSeconds() : GetWorld()->GetTimeSeconds() + ClientServerDeltaTime;
+	BlasterHUD->GetMatchTimerOverlay()->SetCountdownTime(InCountdownTime);
 }

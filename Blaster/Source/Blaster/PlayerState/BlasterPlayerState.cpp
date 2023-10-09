@@ -13,12 +13,12 @@ void ABlasterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(ThisClass, Defeats);
 }
 
-void ABlasterPlayerState::Initialize()
+void ABlasterPlayerState::UpdateHUD_All()
 {
 	if(Controller == nullptr)
 		Controller = Cast<ABlasterPlayerController>(GetOwningController());
-	UpdateHUDScore();
-	UpdateHUDDefeats();
+	UpdateHUD_Score();
+	UpdateHUD_Defeats();
 }
 
 void ABlasterPlayerState::AddToScore(float ScoreAmount)
@@ -26,10 +26,10 @@ void ABlasterPlayerState::AddToScore(float ScoreAmount)
 	if(!HasAuthority()) return;
 	
 	SetScore(GetScore() + ScoreAmount);
-	UpdateHUDScore();
+	UpdateHUD_Score();
 }
 
-void ABlasterPlayerState::UpdateHUDScore()
+void ABlasterPlayerState::UpdateHUD_Score()
 {
 	if(Controller)
 	{
@@ -42,10 +42,10 @@ void ABlasterPlayerState::AddToDefeats(int32 DefeatsAmount)
 	if(!HasAuthority()) return;
 
 	Defeats += DefeatsAmount;
-	UpdateHUDDefeats();
+	UpdateHUD_Defeats();
 }
 
-void ABlasterPlayerState::UpdateHUDDefeats()
+void ABlasterPlayerState::UpdateHUD_Defeats()
 {
 	if(Controller)
 		Controller->SetHUDDefeats(Defeats);
@@ -55,10 +55,10 @@ void ABlasterPlayerState::OnRep_Score()
 {
 	Super::OnRep_Score();
 
-	UpdateHUDScore();
+	UpdateHUD_Score();
 }
 
 void ABlasterPlayerState::OnRep_Defeats()
 {
-	UpdateHUDDefeats();
+	UpdateHUD_Defeats();
 }
