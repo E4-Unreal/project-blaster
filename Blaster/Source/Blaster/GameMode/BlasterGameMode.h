@@ -6,6 +6,11 @@
 #include "GameFramework/GameMode.h"
 #include "BlasterGameMode.generated.h"
 
+namespace MatchState
+{
+	extern BLASTER_API const FName Cooldown; // Match 시간이 종료되어 Match가 끝난 상태. Match 결과를 표시한다.
+}
+
 class ABlasterCharacter;
 class ABlasterPlayerController;
 
@@ -20,11 +25,15 @@ public:
 	virtual void PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
 
-	UPROPERTY(EditDefaultsOnly)
-	float MatchTime = 120.f;
-	
+	/* Match 정보 */
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float MatchTime = 120.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownTime = 10.f;
 
 	float LevelStartingTime = 0.f;
 

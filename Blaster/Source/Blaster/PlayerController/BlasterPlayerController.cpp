@@ -106,20 +106,28 @@ void ABlasterPlayerController::ServerRequestMatchInfo_Implementation()
 	if(GameMode)
 	{
 		SetMatchState(GameMode->GetMatchState());
-		LevelStartingTime = GameMode->LevelStartingTime;
-		MatchTime = GameMode->MatchTime;
-		WarmupTime = GameMode->WarmupTime;
-		
-		ClientReportMatchInfo(LevelStartingTime, MatchTime, WarmupTime);
+
+		// 서버 플레이어 컨트롤러 업데이트
+		if(IsLocalController())
+			UpdateMatchInfo(GameMode->LevelStartingTime, GameMode->WarmupTime, GameMode->MatchTime, GameMode->CooldownTime);
+
+		// 클라이언트 플레이어 컨트롤러 업데이트
+		ClientReportMatchInfo(GameMode->LevelStartingTime, GameMode->WarmupTime, GameMode->MatchTime, GameMode->CooldownTime);
 	}
 }
 
-void ABlasterPlayerController::ClientReportMatchInfo_Implementation(float ServerLevelStartingTime,
-	float ServerMatchTime, float ServerWarmupTime)
+void ABlasterPlayerController::ClientReportMatchInfo_Implementation(float ServerLevelStartingTime, float ServerWarmupTime,
+                                                                    float ServerMatchTime, float ServerCooldownTime)
 {
-	LevelStartingTime = ServerLevelStartingTime;
-	MatchTime = ServerMatchTime;
-	WarmupTime = ServerWarmupTime;
+	UpdateMatchInfo(ServerLevelStartingTime, ServerWarmupTime, ServerMatchTime, ServerCooldownTime);
+}
+
+void ABlasterPlayerController::UpdateMatchInfo(float InLevelStartingTime, float InWarmupTime, float InMatchTime, float InCooldownTime)
+{
+	LevelStartingTime = InLevelStartingTime;
+	MatchTime = InMatchTime;
+	WarmupTime = InWarmupTime;
+	CooldownTime = InCooldownTime;
 }
 
 void ABlasterPlayerController::SetMatchState(FName State)
@@ -149,6 +157,10 @@ void ABlasterPlayerController::HandleMatchStates()
 	{
 		HandleMatchHasStarted();
 	}
+	else if(MatchState == MatchState::Cooldown)
+	{
+		HandleCooldownState();
+	}
 }
 
 void ABlasterPlayerController::HandleMatchIsWaitingToStart()
@@ -170,6 +182,22 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 		
 		BlasterHUD->AddCharacterOverlay();
 		UpdateHUD_All();
+	}
+}
+
+void ABlasterPlayerController::HandleCooldownState()
+{
+	if(BlasterHUD)
+	{
+		if(BlasterHUD->GetCharacterOverlay())
+		{
+			BlasterHUD->GetCharacterOverlay()->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		if(BlasterHUD->GetAnnouncement())
+		{
+			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
 }
 
@@ -289,9 +317,12 @@ void ABlasterPlayerController::UpdateHUD_Countdown()
 	if(MatchState == MatchState::WaitingToStart)
 		CountdownTime = WarmupTime - (GetServerTime() - LevelStartingTime);
 	else if(MatchState == MatchState::InProgress)
-		CountdownTime = WarmupTime + MatchTime - (GetServerTime() - LevelStartingTime);
+		CountdownTime = MatchTime + WarmupTime - (GetServerTime() - LevelStartingTime);
+	else if(MatchState == MatchState::Cooldown)
+		CountdownTime = CooldownTime + MatchTime + WarmupTime - (GetServerTime() - LevelStartingTime);
 	
 	const uint32 SecondsLeftInt = FMath::FloorToInt(CountdownTime);
+	
 	if(CountdownTimeInt != SecondsLeftInt)
 	{
 		CountdownTimeInt = SecondsLeftInt;
@@ -302,6 +333,8 @@ void ABlasterPlayerController::UpdateHUD_Countdown()
 			SetHUD_WarmupCountdown(CountdownTime);
 		else if(MatchState == MatchState::InProgress)
 			SetHUD_MatchCountdown(CountdownTime);
+		else if(MatchState == MatchState::Cooldown)
+			SetHUD_CooldownCountdown(CountdownTime);
 	}
 }
 
@@ -317,4 +350,12 @@ void ABlasterPlayerController::SetHUD_MatchCountdown(float CountdownTime) const
 	if(BlasterHUD == nullptr || BlasterHUD->GetMatchTimerOverlay() == nullptr) return;
 
 	BlasterHUD->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
+}
+
+void ABlasterPlayerController::SetHUD_CooldownCountdown(float CountdownTime) const
+{
+	// TODO Announcement 말고 다른 Overlay로 변경 예정
+	if(BlasterHUD == nullptr || BlasterHUD->GetAnnouncement() == nullptr || BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay() == nullptr) return;
+
+	BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
 }

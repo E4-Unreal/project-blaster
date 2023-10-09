@@ -47,7 +47,9 @@ protected:
 	void ServerRequestMatchInfo();
 
 	UFUNCTION(Client, Reliable)
-	void ClientReportMatchInfo(float ServerLevelStartingTime, float ServerMatchTime, float ServerWarmupTime);
+	void ClientReportMatchInfo(float ServerLevelStartingTime, float ServerWarmupTime, float ServerMatchTime, float ServerCooldownTime);
+
+	void UpdateMatchInfo(float InLevelStartingTime, float InWarmupTime, float InMatchTime, float InCooldownTime);
 
 private:
 	class ABlasterCharacter* BlasterCharacter;
@@ -55,20 +57,23 @@ private:
 	class ABlasterPlayerState* BlasterPlayerState;
 	
 	/* Match 상태 */
-	float MatchTime = 0.f;
-	float WarmupTime = 0.f;
-	float LevelStartingTime = 0.f;
-	uint32 CountdownTimeInt = 0;
-
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	FName MatchState;
 
 	UFUNCTION()
 	void OnRep_MatchState();
+	
+	float WarmupTime = 0.f;
+	float MatchTime = 0.f;
+	float CooldownTime = 0.f;
+	float LevelStartingTime = 0.f;
+	
+	uint32 CountdownTimeInt = 0;
 
 	// TODO GameMode 이벤트 바인딩?
 	void HandleMatchIsWaitingToStart();;
 	void HandleMatchHasStarted();
+	void HandleCooldownState();
 
 public:
 	/* Set HUD */
@@ -92,6 +97,7 @@ public:
 	// Match State
 	void SetHUD_WarmupCountdown(float CountdownTime) const;
 	void SetHUD_MatchCountdown(float CountdownTime) const;
+	void SetHUD_CooldownCountdown(float CountdownTime) const;
 	
 	/* Match 상태 */
 	void SetMatchState(FName State);
