@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "AnnouncementOverlay.generated.h"
+#include "WaitingToStartOverlay.generated.h"
 
 class UMatchTimerOverlay;
 
@@ -12,13 +12,12 @@ class UMatchTimerOverlay;
  * 
  */
 UCLASS()
-class BLASTER_API UAnnouncementOverlay : public UUserWidget
+class BLASTER_API UWaitingToStartOverlay : public UUserWidget
 {
 	GENERATED_BODY()
 
 private:
 	// 자식 사용자 위젯
-	
 	UPROPERTY(meta = (BindWidget))
 	UMatchTimerOverlay* MatchTimerOverlay;
 

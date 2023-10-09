@@ -3,9 +3,10 @@
 
 #include "BlasterHUD.h"
 
-#include "AnnouncementOverlay.h"
-#include "CharacterOverlay.h"
+#include "Match/WaitingToStartOverlay.h"
+#include "Character/CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
+#include "Match/WaitingPostMatchOverlay.h"
 
 void ABlasterHUD::DrawHUD()
 {
@@ -65,18 +66,60 @@ void ABlasterHUD::AddCharacterOverlay()
 	}
 }
 
-void ABlasterHUD::AddAnnouncement()
+void ABlasterHUD::AddWaitingToStartOverlay()
 {
-	if(Announcement)
+	if(WaitingToStartOverlay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%hs: Announcement is already added"), __FUNCTION__);
+		UE_LOG(LogTemp, Warning, TEXT("%hs: Waiting To Start Overlay is already added"), __FUNCTION__);
 		return;
 	}
 	
-	if(GetOwningPlayerController() && AnnouncementClass)
+	if(GetOwningPlayerController() && WaitingToStartOverlayClass)
 	{
-		Announcement = CreateWidget<UAnnouncementOverlay>(GetOwningPlayerController(), AnnouncementClass);
-		Announcement->AddToViewport();
+		WaitingToStartOverlay = CreateWidget<UWaitingToStartOverlay>(GetOwningPlayerController(), WaitingToStartOverlayClass);
+		WaitingToStartOverlay->AddToViewport();
+	}
+}
+
+void ABlasterHUD::AddWaitingPostMatchOverlay()
+{
+	if(WaitingPostMatchOverlay)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%hs: Waiting Post Match Overlay is already added"), __FUNCTION__);
+		return;
+	}
+	
+	if(GetOwningPlayerController() && WaitingPostMatchOverlayClass)
+	{
+		WaitingPostMatchOverlay = CreateWidget<UWaitingPostMatchOverlay>(GetOwningPlayerController(), WaitingPostMatchOverlayClass);
+		WaitingPostMatchOverlay->AddToViewport();
+	}
+}
+
+void ABlasterHUD::RemoveCharacterOverlay()
+{
+	if(CharacterOverlay)
+	{
+		CharacterOverlay->RemoveFromParent();
+		CharacterOverlay = nullptr;
+	}
+}
+
+void ABlasterHUD::RemoveWaitingToStartOverlay()
+{
+	if(WaitingToStartOverlay)
+	{
+		WaitingToStartOverlay->RemoveFromParent();
+		WaitingToStartOverlay = nullptr;
+	}
+}
+
+void ABlasterHUD::RemoveWaitingPostMatchOverlay()
+{
+	if(WaitingPostMatchOverlay)
+	{
+		WaitingPostMatchOverlay->RemoveFromParent();
+		WaitingPostMatchOverlay = nullptr;
 	}
 }
 

@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "BlasterHUD.generated.h"
 
+class UWaitingPostMatchOverlay;
 class UMatchTimerOverlay;
 class UWeaponOverlay;
 
@@ -24,7 +25,7 @@ struct FHUDPackage
 };
 
 class UCharacterOverlay;
-class UAnnouncementOverlay;
+class UWaitingToStartOverlay;
 
 /**
  * 
@@ -38,7 +39,12 @@ public:
 	virtual void DrawHUD() override;
 
 	void AddCharacterOverlay();
-	void AddAnnouncement();
+	void AddWaitingToStartOverlay();
+	void AddWaitingPostMatchOverlay();
+	
+	void RemoveCharacterOverlay();
+	void RemoveWaitingToStartOverlay();
+	void RemoveWaitingPostMatchOverlay();
 
 private:
 	// 사용자 위젯
@@ -46,13 +52,19 @@ private:
 	UCharacterOverlay* CharacterOverlay;
 
 	UPROPERTY()
-	UAnnouncementOverlay* Announcement;
+	UWaitingToStartOverlay* WaitingToStartOverlay;
 
-	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	UPROPERTY()
+	UWaitingPostMatchOverlay* WaitingPostMatchOverlay;
+
+	UPROPERTY(EditAnywhere, Category = Overlay)
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
-	UPROPERTY(EditAnywhere, Category = Announcements)
-	TSubclassOf<UUserWidget> AnnouncementClass;
+	UPROPERTY(EditAnywhere, Category = Overlay)
+	TSubclassOf<UUserWidget> WaitingToStartOverlayClass;
+
+	UPROPERTY(EditAnywhere, Category = Overlay)
+	TSubclassOf<UUserWidget> WaitingPostMatchOverlayClass;
 	
 	// 크로스헤어
 	FHUDPackage HUDPackage;
@@ -67,8 +79,9 @@ public:
 
 	// 사용자 위젯 Getter
 	FORCEINLINE UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
+	FORCEINLINE UWaitingToStartOverlay* GetWaitingToStartOverlay() const { return WaitingToStartOverlay; }
+	FORCEINLINE UWaitingPostMatchOverlay* GetWaitingPostMatchOverlay() const { return WaitingPostMatchOverlay; }
+	
 	UWeaponOverlay* GetWeaponOverlay() const;
 	UMatchTimerOverlay* GetMatchTimerOverlay() const;
-
-	FORCEINLINE UAnnouncementOverlay* GetAnnouncement() const { return Announcement; }
 };

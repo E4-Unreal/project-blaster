@@ -5,13 +5,13 @@
 
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
-#include "Blaster/HUD/AnnouncementOverlay.h"
+#include "Blaster/HUD/Match/WaitingToStartOverlay.h"
 #include "Blaster/HUD/BlasterHUD.h"
-#include "Blaster/HUD/CharacterOverlay.h"
-#include "Blaster/HUD/MatchTimerOverlay.h"
-#include "Blaster/HUD/WeaponOverlay.h"
+#include "Blaster/HUD/Character/CharacterOverlay.h"
+#include "Blaster/HUD/Match/MatchTimerOverlay.h"
+#include "Blaster/HUD/Character/WeaponOverlay.h"
+#include "Blaster/HUD/Match/WaitingPostMatchOverlay.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
-#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
 #include "Kismet/GameplayStatics.h"
@@ -151,6 +151,8 @@ void ABlasterPlayerController::HandleMatchStates()
 {
 	if(MatchState == MatchState::WaitingToStart)
 	{
+		// TODO APlayerController::ReceivedPlayer가 AGameMode::BeginPlay의 호출 순서로 인한 서버 플레이어 동기화 오류 방지 임시 조치
+		ServerRequestMatchInfo();
 		HandleMatchIsWaitingToStart();
 	}
 	else if(MatchState == MatchState::InProgress)
@@ -167,7 +169,7 @@ void ABlasterPlayerController::HandleMatchIsWaitingToStart()
 {
 	if(BlasterHUD)
 	{
-		BlasterHUD->AddAnnouncement();
+		BlasterHUD->AddWaitingToStartOverlay();
 	}
 }
 
@@ -175,11 +177,7 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 {
 	if(BlasterHUD)
 	{
-		if(BlasterHUD->GetAnnouncement())
-		{
-			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Hidden);
-		}
-		
+		BlasterHUD->RemoveWaitingToStartOverlay();
 		BlasterHUD->AddCharacterOverlay();
 		UpdateHUD_All();
 	}
@@ -189,15 +187,8 @@ void ABlasterPlayerController::HandleCooldownState()
 {
 	if(BlasterHUD)
 	{
-		if(BlasterHUD->GetCharacterOverlay())
-		{
-			BlasterHUD->GetCharacterOverlay()->SetVisibility(ESlateVisibility::Hidden);
-		}
-
-		if(BlasterHUD->GetAnnouncement())
-		{
-			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Visible);
-		}
+		BlasterHUD->RemoveCharacterOverlay();
+		BlasterHUD->AddWaitingPostMatchOverlay();
 	}
 }
 
@@ -340,9 +331,9 @@ void ABlasterPlayerController::UpdateHUD_Countdown()
 
 void ABlasterPlayerController::SetHUD_WarmupCountdown(float CountdownTime) const
 {
-	if(BlasterHUD == nullptr || BlasterHUD->GetAnnouncement() == nullptr || BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay() == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWaitingToStartOverlay() == nullptr || BlasterHUD->GetWaitingToStartOverlay()->GetMatchTimerOverlay() == nullptr) return;
 
-	BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
+	BlasterHUD->GetWaitingToStartOverlay()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
 }
 
 void ABlasterPlayerController::SetHUD_MatchCountdown(float CountdownTime) const
@@ -354,8 +345,7 @@ void ABlasterPlayerController::SetHUD_MatchCountdown(float CountdownTime) const
 
 void ABlasterPlayerController::SetHUD_CooldownCountdown(float CountdownTime) const
 {
-	// TODO Announcement 말고 다른 Overlay로 변경 예정
-	if(BlasterHUD == nullptr || BlasterHUD->GetAnnouncement() == nullptr || BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay() == nullptr) return;
+	if(BlasterHUD == nullptr || BlasterHUD->GetWaitingPostMatchOverlay() == nullptr || BlasterHUD->GetWaitingPostMatchOverlay()->GetMatchTimerOverlay() == nullptr) return;
 
-	BlasterHUD->GetAnnouncement()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
+	BlasterHUD->GetWaitingPostMatchOverlay()->GetMatchTimerOverlay()->SetCountdownTime(CountdownTime);
 }
