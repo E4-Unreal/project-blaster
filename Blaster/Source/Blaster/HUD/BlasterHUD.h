@@ -36,25 +36,30 @@ class BLASTER_API ABlasterHUD : public AHUD
 	GENERATED_BODY()
 
 public:
+	virtual void PostInitializeComponents() override;
 	virtual void DrawHUD() override;
 
-	void AddCharacterOverlay();
-	void AddWaitingToStartOverlay();
-	void AddWaitingPostMatchOverlay();
+	/* Match State */
+	UFUNCTION()
+	void OnMatchStateSet(FName NewState);
+
+	void ShowCharacterOverlay();
+	void ShowWaitingToStartOverlay();
+	void ShowWaitingPostMatchOverlay();
 	
-	void RemoveCharacterOverlay();
-	void RemoveWaitingToStartOverlay();
-	void RemoveWaitingPostMatchOverlay();
+	void HideCharacterOverlay();
+	void HideWaitingToStartOverlay();
+	void HideWaitingPostMatchOverlay();
 
 private:
-	// 사용자 위젯
-	UPROPERTY()
+	/* 사용자 위젯 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UCharacterOverlay* CharacterOverlay;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UWaitingToStartOverlay* WaitingToStartOverlay;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UWaitingPostMatchOverlay* WaitingPostMatchOverlay;
 
 	UPROPERTY(EditAnywhere, Category = Overlay)
@@ -74,6 +79,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CrosshairsSpreadMax = 16.f;
 
+	/* Match State */
+	UMatchTimerOverlay* CurrentMatchTimerOverlay;
+
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }
 
@@ -84,4 +92,7 @@ public:
 	
 	UWeaponOverlay* GetWeaponOverlay() const;
 	UMatchTimerOverlay* GetMatchTimerOverlay() const;
+
+	/* Match State */
+	FORCEINLINE UMatchTimerOverlay* GetCurrentMatchTimerOverlay() const { return CurrentMatchTimerOverlay; }
 };

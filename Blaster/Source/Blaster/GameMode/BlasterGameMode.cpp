@@ -4,6 +4,7 @@
 #include "BlasterGameMode.h"
 
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "GameFramework/PlayerStart.h"
@@ -56,20 +57,6 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	}
 }
 
-void ABlasterGameMode::OnMatchStateSet()
-{
-	Super::OnMatchStateSet();
-
-	for(FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		ABlasterPlayerController* BlasterPlayerController = Cast<ABlasterPlayerController>(*It);
-		if(BlasterPlayerController)
-		{
-			BlasterPlayerController->SetMatchState(MatchState);
-		}
-	}
-}
-
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
                                         ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
@@ -85,6 +72,12 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 	if(AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
 	{
 		AttackerPlayerState->AddToScore(1.f);
+
+		// TODO PlayerState에서 GameState 직접 업데이트?
+		if(ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>())
+		{
+			BlasterGameState->UpdateTopScore(AttackerPlayerState);
+		}
 	}
 
 	if(VictimPlayerState)

@@ -11,77 +11,50 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void AcknowledgePossession(APawn* P) override;
-	virtual void ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass) override;
-	virtual void BeginPlayingState() override;
-
-	/* 서버 - 클라이언트 시간 동기화 */
-	virtual void ReceivedPlayer() override;
-	virtual float GetServerTime();
-	void HandleMatchStates();
-
-protected:
-	void UpdateHUD_Countdown();
-
-	/* 서버 - 클라이언트 시간 동기화 */
-	UPROPERTY(EditAnywhere, Category = Time)
-	float TimeSyncFrequency = 5.f;
-	float TimeSyncRunningTime = 0.f;
-	void CheckTimeSync(float DeltaSeconds);
-
-	// 클라이언트와 서버 간의 시간 차이
-	float ClientServerDeltaTime = 0.f;
-
-	// 클라이언트에서 서버 시간 요청
-	UFUNCTION(Server, Reliable)
-	void ServerRequestServerTime(float ClientRequestTime);
-
-	// 서버에서 클라이언트에 서버 시간 응답
-	UFUNCTION(Client, Reliable)
-	void ClientReportServerTime(float ClientRequestTime, float ServerReportTime);
-
-	/* Match 상태 */
-	UFUNCTION(Server, Reliable)
-	void ServerRequestMatchInfo();
-
-	UFUNCTION(Client, Reliable)
-	void ClientReportMatchInfo(float ServerLevelStartingTime, float ServerWarmupTime, float ServerMatchTime, float ServerCooldownTime);
-
-	void UpdateMatchInfo(float InLevelStartingTime, float InWarmupTime, float InMatchTime, float InCooldownTime);
+	/* 멤버 변수 할당 이벤트 */
+	virtual void PostInitializeComponents() override; // Set Game State
+	virtual void InitPlayerState() override; // Set Player State
+	virtual void OnRep_PlayerState() override; // Set Player State
+	virtual void ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass) override; // Set HUD
+	virtual void AcknowledgePossession(APawn* P) override; // Set Pawn
 
 private:
+	/* Blaster Game State */
+	class ABlasterGameState* BlasterGameState;
+	void SetBlasterGameState(AGameStateBase* GameState);
+	void InitBlasterGameState();
+	
+	DECLARE_EVENT(ThisClass, FGameStateSetEvent);
+	FGameStateSetEvent OnBlasterGameStateSet;
+
+	/* Blaster Character */
 	class ABlasterCharacter* BlasterCharacter;
-	class ABlasterHUD* BlasterHUD;
+	void SetBlasterCharacter(APawn* InPawn);
+	void InitBlasterCharacter();
+
+	DECLARE_EVENT(ThisClass, FCharacterSetEvent);
+	FCharacterSetEvent OnBlasterCharacterSet;
+
+	/* Blaster Player State */
 	class ABlasterPlayerState* BlasterPlayerState;
-	
-	/* Match 상태 */
-	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
-	FName MatchState;
+	void SetBlasterPlayerState(APlayerState* InPlayerState);
+	void InitBlasterPlayerState();
 
-	UFUNCTION()
-	void OnRep_MatchState();
-	
-	float WarmupTime = 0.f;
-	float MatchTime = 0.f;
-	float CooldownTime = 0.f;
-	float LevelStartingTime = 0.f;
-	
-	uint32 CountdownTimeInt = 0;
+	DECLARE_EVENT(ThisClass, FPlayerStateSetEvent);
+	FPlayerStateSetEvent OnBlasterPlayerStateSet;
 
-	// TODO GameMode 이벤트 바인딩?
-	void HandleMatchIsWaitingToStart();;
-	void HandleMatchHasStarted();
-	void HandleCooldownState();
+	/* Blaster HUD */
+	class ABlasterHUD* BlasterHUD;
+	void SetBlasterHUD(AHUD* HUD);
+	void InitBlasterHUD();
+	
+	DECLARE_EVENT(ThisClass, FHUDSetEvent);
+	FHUDSetEvent OnBlasterHUDSet;
 
 public:
+	// TODO Private로 이동 예정
 	/* Set HUD */
 	void UpdateHUD_All();
-	
-	// Character
-	void SetHUDHealth(float Health);
-	void SetHUDMaxHealth(float MaxHealth);
 
 	// Weapon
 	void SetHUDAmmo(int32 Ammo);
@@ -95,10 +68,13 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 
 	// Match State
-	void SetHUD_WarmupCountdown(float CountdownTime) const;
-	void SetHUD_MatchCountdown(float CountdownTime) const;
-	void SetHUD_CooldownCountdown(float CountdownTime) const;
+	void SetHUD_CountdownTime(float CountdownTime) const;
+
+protected:
+	// Character
+	UFUNCTION()
+	void SetHUD_Health(float Health);
 	
-	/* Match 상태 */
-	void SetMatchState(FName State);
+	UFUNCTION()
+	void SetHUD_MaxHealth(float MaxHealth);
 };

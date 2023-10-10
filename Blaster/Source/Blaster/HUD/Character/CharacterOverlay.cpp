@@ -6,11 +6,11 @@
 void UCharacterOverlay::SetHealth(const float InHealth)
 {
 	Health = InHealth;
-	HealthRatio = Health / MaxHealth;
+	HealthRatio = MaxHealth == 0.f ? 1.f : Health / MaxHealth;
 }
 
 void UCharacterOverlay::SetMaxHealth(const float InMaxHealth)
 {
 	MaxHealth = InMaxHealth;
-	HealthRatio = Health / MaxHealth;
+	HealthRatio = MaxHealth == 0.f ? 1.f : Health / MaxHealth;
 }

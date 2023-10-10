@@ -425,7 +425,8 @@ void ABlasterCharacter::OnTakeAnyDamage_Event(AActor* DamagedActor, float Damage
 {
 	// 데미지 적용
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-	UpdateHUD_Health();
+	OnHealthUpdated.Broadcast(Health);
+	//UpdateHUD_Health();
 
 	// 체력과 데미지에 따른 반응
 	if(Health == 0.f) // Dead
@@ -489,9 +490,16 @@ void ABlasterCharacter::HideCharacter()
 	}
 }
 
+void ABlasterCharacter::OnRep_MaxHealth()
+{
+	OnHealthUpdated.Broadcast(MaxHealth);
+}
+
 void ABlasterCharacter::OnRep_Health(float OldHealth)
 {
-	UpdateHUD_Health();
+	OnHealthUpdated.Broadcast(Health);
+	
+	//UpdateHUD_Health();
 
 	if(OldHealth > Health)
 		PlayHitReactMontage();
@@ -558,30 +566,36 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
 	}
 }
 
-void ABlasterCharacter::UpdateHUD_All()
+/*void ABlasterCharacter::UpdateHUD_All()
 {
 	if(Controller == nullptr) return;
 	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 
 	UpdateHUD_Health();
 	UpdateHUD_MaxHealth();
+}*/
+
+void ABlasterCharacter::ManualUpdateHUD()
+{
+	OnHealthUpdated.Broadcast(Health);
+	OnMaxHealthUpdated.Broadcast(MaxHealth);
 }
 
-void ABlasterCharacter::UpdateHUD_Health()
+/*void ABlasterCharacter::UpdateHUD_Health()
 {
 	if(BlasterPlayerController)
 	{
-		BlasterPlayerController->SetHUDHealth(Health);
+		BlasterPlayerController->SetHUD_Health(Health);
 	}
-}
+}*/
 
-void ABlasterCharacter::UpdateHUD_MaxHealth()
+/*void ABlasterCharacter::UpdateHUD_MaxHealth()
 {
 	if(BlasterPlayerController)
 	{
-		BlasterPlayerController->SetHUDMaxHealth(MaxHealth);
+		BlasterPlayerController->SetHUD_MaxHealth(MaxHealth);
 	}
-}
+}*/
 
 void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
 {

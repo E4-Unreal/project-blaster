@@ -3,10 +3,31 @@
 
 #include "BlasterHUD.h"
 
+#include "Blaster/GameMode/BlasterGameMode.h"
 #include "Match/WaitingToStartOverlay.h"
 #include "Character/CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/GameMode.h"
 #include "Match/WaitingPostMatchOverlay.h"
+
+void ABlasterHUD::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if(GetOwningPlayerController() == nullptr) return;
+	
+	CharacterOverlay = CreateWidget<UCharacterOverlay>(GetOwningPlayerController(), CharacterOverlayClass);
+	CharacterOverlay->AddToViewport();
+	CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
+	
+	WaitingToStartOverlay = CreateWidget<UWaitingToStartOverlay>(GetOwningPlayerController(), WaitingToStartOverlayClass);
+	WaitingToStartOverlay->AddToViewport();
+	WaitingToStartOverlay->SetVisibility(ESlateVisibility::Hidden);
+	
+	WaitingPostMatchOverlay = CreateWidget<UWaitingPostMatchOverlay>(GetOwningPlayerController(), WaitingPostMatchOverlayClass);
+	WaitingPostMatchOverlay->AddToViewport();
+	WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
+}
 
 void ABlasterHUD::DrawHUD()
 {
@@ -51,75 +72,75 @@ void ABlasterHUD::DrawHUD()
 	}
 }
 
-void ABlasterHUD::AddCharacterOverlay()
+void ABlasterHUD::OnMatchStateSet(FName NewState)
+{
+	if(NewState == MatchState::WaitingToStart)
+	{
+		CurrentMatchTimerOverlay = WaitingToStartOverlay == nullptr ? nullptr : WaitingToStartOverlay->GetMatchTimerOverlay();
+
+		ShowWaitingToStartOverlay();
+	}
+	else if(NewState == MatchState::InProgress)
+	{
+		CurrentMatchTimerOverlay = CharacterOverlay == nullptr ? nullptr : CharacterOverlay->GetMatchTimerOverlay();
+		
+		HideWaitingToStartOverlay();
+		ShowCharacterOverlay();
+	}
+	else if(NewState == MatchState::Cooldown)
+	{
+		CurrentMatchTimerOverlay = WaitingPostMatchOverlay == nullptr ? nullptr : WaitingPostMatchOverlay->GetMatchTimerOverlay();
+		
+		HideCharacterOverlay();
+		ShowWaitingPostMatchOverlay();
+	}
+}
+
+void ABlasterHUD::ShowCharacterOverlay()
 {
 	if(CharacterOverlay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%hs: Character Overlay is already added"), __FUNCTION__);
-		return;
-	}
-	
-	if(GetOwningPlayerController() && CharacterOverlayClass)
-	{
-		CharacterOverlay = CreateWidget<UCharacterOverlay>(GetOwningPlayerController(), CharacterOverlayClass);
-		CharacterOverlay->AddToViewport();
+		CharacterOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
-void ABlasterHUD::AddWaitingToStartOverlay()
+void ABlasterHUD::ShowWaitingToStartOverlay()
 {
 	if(WaitingToStartOverlay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%hs: Waiting To Start Overlay is already added"), __FUNCTION__);
-		return;
-	}
-	
-	if(GetOwningPlayerController() && WaitingToStartOverlayClass)
-	{
-		WaitingToStartOverlay = CreateWidget<UWaitingToStartOverlay>(GetOwningPlayerController(), WaitingToStartOverlayClass);
-		WaitingToStartOverlay->AddToViewport();
+		WaitingToStartOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
-void ABlasterHUD::AddWaitingPostMatchOverlay()
+void ABlasterHUD::ShowWaitingPostMatchOverlay()
 {
 	if(WaitingPostMatchOverlay)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%hs: Waiting Post Match Overlay is already added"), __FUNCTION__);
-		return;
-	}
-	
-	if(GetOwningPlayerController() && WaitingPostMatchOverlayClass)
-	{
-		WaitingPostMatchOverlay = CreateWidget<UWaitingPostMatchOverlay>(GetOwningPlayerController(), WaitingPostMatchOverlayClass);
-		WaitingPostMatchOverlay->AddToViewport();
+		WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
-void ABlasterHUD::RemoveCharacterOverlay()
+void ABlasterHUD::HideCharacterOverlay()
 {
 	if(CharacterOverlay)
 	{
-		CharacterOverlay->RemoveFromParent();
-		CharacterOverlay = nullptr;
+		CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
-void ABlasterHUD::RemoveWaitingToStartOverlay()
+void ABlasterHUD::HideWaitingToStartOverlay()
 {
 	if(WaitingToStartOverlay)
 	{
-		WaitingToStartOverlay->RemoveFromParent();
-		WaitingToStartOverlay = nullptr;
+		WaitingToStartOverlay->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
-void ABlasterHUD::RemoveWaitingPostMatchOverlay()
+void ABlasterHUD::HideWaitingPostMatchOverlay()
 {
 	if(WaitingPostMatchOverlay)
 	{
-		WaitingPostMatchOverlay->RemoveFromParent();
-		WaitingPostMatchOverlay = nullptr;
+		WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

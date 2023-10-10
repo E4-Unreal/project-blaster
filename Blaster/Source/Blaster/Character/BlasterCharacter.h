@@ -11,12 +11,21 @@
 
 enum class ETurnInPlaceState : uint8;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHealthUpdatedSignature, float, Health);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMaxHealthUpdatedSignature, float, MaxHealth);
+
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractableWithCrosshairs
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintAssignable)
+	FHealthUpdatedSignature OnHealthUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FMaxHealthUpdatedSignature OnMaxHealthUpdated;
+	
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -40,7 +49,8 @@ public:
 	void MulticastEliminate();
 
 	/* HUD */
-	void UpdateHUD_All();
+	//void UpdateHUD_All();
+	void ManualUpdateHUD();
 
 protected:
 	virtual void BeginPlay() override;
@@ -116,8 +126,11 @@ private:
 	float CameraThreshold = 200.f;
 
 	/* 체력 */
- 	UPROPERTY(EditAnywhere, Category = PlayerStats)
+ 	UPROPERTY(ReplicatedUsing = OnRep_MaxHealth, EditAnywhere, Category = PlayerStats)
 	float MaxHealth = 100.f;
+
+	UFUNCTION()
+	void OnRep_MaxHealth();
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = PlayerStats)
 	float Health = 100.f;
@@ -146,8 +159,8 @@ private:
 
 	/* HUD */
 	class ABlasterPlayerController* BlasterPlayerController;
-	void UpdateHUD_Health();
-	void UpdateHUD_MaxHealth();
+	/*void UpdateHUD_Health();
+	void UpdateHUD_MaxHealth();*/
 
 	/* Dissolve Effect */
 	UPROPERTY(VisibleAnywhere)
@@ -172,6 +185,7 @@ private:
 	UMaterialInstance* DissolveMaterialInstance;
 	
 public:
+	// Character
 	FORCEINLINE AWeapon* GetOverlappingWeapon() const { return OverlappingWeapon; }
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
