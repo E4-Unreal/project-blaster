@@ -16,10 +16,11 @@ void ABlasterGameState::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// TODO 리팩토링?
 	// 매치 상태에 따른 남은 시간 계산
 	float CountdownTime = 0.f;
 	if(MatchState == MatchState::WaitingToStart)
-		CountdownTime =FMath::Clamp(WarmupTime - GetServerWorldTimeSeconds(), 0.f, WarmupTime);
+		CountdownTime = FMath::Clamp(WarmupTime - GetServerWorldTimeSeconds(), 0.f, WarmupTime);
 	else if(MatchState == MatchState::InProgress)
 		CountdownTime = FMath::Clamp(MatchTime + WarmupTime - GetServerWorldTimeSeconds(), 0.f, MatchTime);
 	else if(MatchState == MatchState::Cooldown)
@@ -43,7 +44,6 @@ void ABlasterGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ThisClass, WarmupTime);
 	DOREPLIFETIME(ThisClass, MatchTime);
 	DOREPLIFETIME(ThisClass, CooldownTime);
-	DOREPLIFETIME(ThisClass, LevelStartingTime);
 	DOREPLIFETIME(ThisClass, TopScoringPlayers);
 }
 
@@ -62,12 +62,15 @@ void ABlasterGameState::OnRep_MatchState()
 				if(const ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(World->GetAuthGameMode()))
 				{
 					WarmupTime = GameMode->WarmupTime;
-					MatchTime = GameMode->WarmupTime;
+					MatchTime = GameMode->MatchTime;
 					CooldownTime = GameMode->CooldownTime;
-					LevelStartingTime = GameMode->LevelStartingTime;
 				}
 			}
 		}
+	}
+	else if(MatchState == MatchState::Cooldown) // TODO WaitingPostMatch
+	{
+		OnTopScoringPlayersUpdated.Broadcast(TopScoringPlayers);
 	}
 	
 	Super::OnRep_MatchState();

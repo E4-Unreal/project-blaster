@@ -20,20 +20,14 @@ ABlasterGameMode::ABlasterGameMode()
 	bDelayedStart = true;
 }
 
-void ABlasterGameMode::BeginPlay()
-{
-	Super::BeginPlay();
-
-	LevelStartingTime = GetWorld()->GetTimeSeconds();
-}
-
 void ABlasterGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// TODO 리팩토링?
 	if(MatchState == MatchState::WaitingToStart)
 	{
-		CountdownTime = WarmupTime - (GetWorld()->GetTimeSeconds() - LevelStartingTime);
+		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds();
 		if(CountdownTime <= 0.f)
 		{
 			StartMatch();
@@ -41,7 +35,7 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	}
 	else if(MatchState == MatchState::InProgress)
 	{
-		CountdownTime = MatchTime + WarmupTime - (GetWorld()->GetTimeSeconds() - LevelStartingTime);
+		CountdownTime = MatchTime + WarmupTime - GetWorld()->GetTimeSeconds();
 		if(CountdownTime <= 0.f)
 		{
 			SetMatchState(MatchState::Cooldown);
@@ -49,12 +43,19 @@ void ABlasterGameMode::Tick(float DeltaSeconds)
 	}
 	else if(MatchState == MatchState::Cooldown)
 	{
-		CountdownTime = CooldownTime + MatchTime + WarmupTime - (GetWorld()->GetTimeSeconds() - LevelStartingTime);
+		CountdownTime = CooldownTime + MatchTime + WarmupTime - GetWorld()->GetTimeSeconds();
 		if(CountdownTime <= 0.f)
 		{
 			RestartGame();
 		}
 	}
+}
+
+void ABlasterGameMode::InitGameState()
+{
+	Super::InitGameState();
+
+	BlasterGameState = GetGameState<ABlasterGameState>();
 }
 
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
@@ -71,10 +72,9 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 
 	if(AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
 	{
-		AttackerPlayerState->AddScore(1.f);
-
-		// TODO PlayerState에서 GameState 직접 업데이트?
-		if(ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>())
+		AttackerPlayerState->AddScore();
+		
+		if(BlasterGameState)
 		{
 			BlasterGameState->UpdateTopScore(AttackerPlayerState);
 		}
@@ -82,7 +82,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 
 	if(VictimPlayerState)
 	{
-		VictimPlayerState->AddDefeats(1.f);
+		VictimPlayerState->AddDefeats();
 	}
 
 	if(EliminatedCharacter)

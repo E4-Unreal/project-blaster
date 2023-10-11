@@ -66,7 +66,12 @@ public:
 	void SetDefeats(int32 Defeats);
 
 	// Match Timer Overlay
+	UFUNCTION()
 	void SetCountdownTime(float CountdownTime);
+
+	// Waiting Post Match Overlay
+	UFUNCTION()
+	void SetTopScoringPlayers(const TArray<ABlasterPlayerState*>& InTopScoringPlayers);
 
 private:
 	/* 사용자 위젯 */

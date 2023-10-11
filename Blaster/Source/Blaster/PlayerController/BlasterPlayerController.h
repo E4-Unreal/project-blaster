@@ -61,4 +61,6 @@ public:
 	void SetHUDMagCapacity(int32 MagCapacity);
 	void HideWeaponOverlay() const;
 	void ShowWeaponOverlay() const;
+
+	FORCEINLINE ABlasterPlayerState* GetBlasterPlayerState() const { return BlasterPlayerState; }
 };

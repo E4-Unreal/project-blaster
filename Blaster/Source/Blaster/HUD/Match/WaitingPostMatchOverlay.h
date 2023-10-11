@@ -7,6 +7,17 @@
 #include "WaitingPostMatchOverlay.generated.h"
 
 class UMatchTimerOverlay;
+class ABlasterPlayerState;
+
+UENUM(BlueprintType)
+enum class EWinnerState : uint8
+{
+	EWS_NoOne UMETA(DisplayName = "No One"),
+	EWS_LocalPlayer UMETA(DisplayName = "Local Player"),
+	EWS_RemotePlayer UMETA(DisplayName = "Remote Player"),
+
+	EWS_MAX UMETA(DisplayName = "Default Max")
+};
 
 /**
  * 
@@ -21,6 +32,13 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UMatchTimerOverlay* MatchTimerOverlay;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	TArray<ABlasterPlayerState*> TopScoringPlayers;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	EWinnerState WinnerState;
+
 public:
 	FORCEINLINE UMatchTimerOverlay* GetMatchTimerOverlay() const { return MatchTimerOverlay; }
+	void SetTopScoringPlayers(const TArray<ABlasterPlayerState*>& InTopScoringPlayers);
 };

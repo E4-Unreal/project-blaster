@@ -96,6 +96,23 @@ void ABlasterHUD::OnMatchStateSet(FName NewState)
 		HideCharacterOverlay();
 		ShowWaitingPostMatchOverlay();
 	}
+	else if(NewState == MatchState::LeavingMap)
+	{
+		if(WaitingToStartOverlay)
+		{
+			CharacterOverlay->RemoveFromParent();
+		}
+		
+		if(CharacterOverlay)
+		{
+			CharacterOverlay->RemoveFromParent();
+		}
+		
+		if(WaitingPostMatchOverlay)
+		{
+			WaitingPostMatchOverlay->RemoveFromParent();
+		}
+	}
 }
 
 void ABlasterHUD::ShowCharacterOverlay()
@@ -187,6 +204,14 @@ void ABlasterHUD::SetCountdownTime(float CountdownTime)
 	if(CurrentMatchTimerOverlay)
 	{
 		CurrentMatchTimerOverlay->SetCountdownTime(CountdownTime);
+	}
+}
+
+void ABlasterHUD::SetTopScoringPlayers(const TArray<ABlasterPlayerState*>& InTopScoringPlayers)
+{
+	if(WaitingPostMatchOverlay)
+	{
+		WaitingPostMatchOverlay->SetTopScoringPlayers(InTopScoringPlayers);
 	}
 }
 

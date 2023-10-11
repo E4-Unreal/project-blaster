@@ -97,6 +97,7 @@ void ABlasterPlayerController::InitBlasterGameState()
 	if(BlasterHUD)
 	{
 		BlasterGameState->OnCountdownUpdated.AddUObject(BlasterHUD, &ABlasterHUD::SetCountdownTime);
+		BlasterGameState->OnTopScoringPlayersUpdated.AddUObject(BlasterHUD, &ABlasterHUD::SetTopScoringPlayers);
 	}
 }
 

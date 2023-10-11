@@ -28,10 +28,9 @@ public:
 
 	DECLARE_EVENT_OneParam(ThisClass, FCountdownUpdatedEvent, float);
 	FCountdownUpdatedEvent OnCountdownUpdated;
-
-	// TODO 클라이언트에 Player State 있지 않나?
-	UPROPERTY(Replicated)
-	TArray<ABlasterPlayerState*> TopScoringPlayers;
+	
+	DECLARE_EVENT_OneParam(ThisClass, FTopScoringPlayersUpdatedEvent, const TArray<ABlasterPlayerState*>&);
+	FTopScoringPlayersUpdatedEvent OnTopScoringPlayersUpdated;
 
 private:
 	/* Match 타이머 */
@@ -44,11 +43,12 @@ private:
 	UPROPERTY(Replicated)
 	float CooldownTime = 0.f;
 
-	UPROPERTY(Replicated)
-	float LevelStartingTime = 0.f;
-
 	uint32 CountdownTimeInt = 0;
 
 	/* Score */
 	float TopScore = 0.f;
+
+	// TODO 클라이언트에 Player State 있지 않나?
+	UPROPERTY(Replicated)
+	TArray<ABlasterPlayerState*> TopScoringPlayers;
 };
