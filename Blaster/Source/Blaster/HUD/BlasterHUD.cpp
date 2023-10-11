@@ -7,7 +7,9 @@
 #include "Match/WaitingToStartOverlay.h"
 #include "Character/CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "Match/MatchTimerOverlay.h"
 #include "Match/WaitingPostMatchOverlay.h"
 
 void ABlasterHUD::PostInitializeComponents()
@@ -141,6 +143,50 @@ void ABlasterHUD::HideWaitingPostMatchOverlay()
 	if(WaitingPostMatchOverlay)
 	{
 		WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+/* Set Overlay Value */
+
+void ABlasterHUD::SetHealth(float Health)
+{
+	if(CharacterOverlay)
+	{
+		CharacterOverlay->SetHealth(Health);
+	}
+}
+
+void ABlasterHUD::SetMaxHealth(float MaxHealth)
+{
+	if(CharacterOverlay)
+	{
+		CharacterOverlay->SetMaxHealth(MaxHealth);
+	}
+}
+
+void ABlasterHUD::SetScore(int32 Score)
+{
+	if(CharacterOverlay && CharacterOverlay->ScoreText)
+	{
+		const FString ScoreString = FString::Printf(TEXT("Score : %d"), Score);
+		CharacterOverlay->ScoreText->SetText(FText::FromString(ScoreString));
+	}
+}
+
+void ABlasterHUD::SetDefeats(int32 Defeats)
+{
+	if(CharacterOverlay && CharacterOverlay->DefeatsText)
+	{
+		const FString DefeatsString = FString::Printf(TEXT("Defeats : %d"), Defeats);
+		CharacterOverlay->DefeatsText->SetText(FText::FromString(DefeatsString));
+	}
+}
+
+void ABlasterHUD::SetCountdownTime(float CountdownTime)
+{
+	if(CurrentMatchTimerOverlay)
+	{
+		CurrentMatchTimerOverlay->SetCountdownTime(CountdownTime);
 	}
 }
 

@@ -93,8 +93,11 @@ void ABlasterPlayerController::SetBlasterGameState(AGameStateBase* GameState)
 void ABlasterPlayerController::InitBlasterGameState()
 {
 	if(BlasterGameState == nullptr) return;
-	
-	BlasterGameState->OnCountdownUpdated.AddUObject(this, &ThisClass::SetHUD_CountdownTime);
+
+	if(BlasterHUD)
+	{
+		BlasterGameState->OnCountdownUpdated.AddUObject(BlasterHUD, &ABlasterHUD::SetCountdownTime);
+	}
 }
 
 void ABlasterPlayerController::SetBlasterCharacter(APawn* InPawn)
@@ -117,10 +120,10 @@ void ABlasterPlayerController::SetBlasterCharacter(APawn* InPawn)
 
 void ABlasterPlayerController::InitBlasterCharacter()
 {
-	if(BlasterCharacter == nullptr) return;
+	if(BlasterCharacter == nullptr || BlasterHUD == nullptr) return;
 	
-	BlasterCharacter->OnHealthUpdated.AddDynamic(this, &ThisClass::SetHUD_Health);
-	BlasterCharacter->OnMaxHealthUpdated.AddDynamic(this, &ThisClass::SetHUD_MaxHealth);
+	BlasterCharacter->OnHealthUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetHealth);
+	BlasterCharacter->OnMaxHealthUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetMaxHealth);
 	BlasterCharacter->ManualUpdateHUD();
 }
 
@@ -147,7 +150,12 @@ void ABlasterPlayerController::InitBlasterPlayerState()
 {
 	if(BlasterPlayerState == nullptr) return;
 
-	BlasterPlayerState->UpdateHUD_All();
+	if(BlasterHUD)
+	{
+		BlasterPlayerState->OnScoreUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetScore);
+		BlasterPlayerState->OnDefeatsUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetDefeats);
+		BlasterPlayerState->ManualUpdateHUD(); // TODO 인터페이스화?
+	}
 }
 
 void ABlasterPlayerController::SetBlasterHUD(AHUD* HUD)
@@ -171,40 +179,13 @@ void ABlasterPlayerController::SetBlasterHUD(AHUD* HUD)
 
 void ABlasterPlayerController::InitBlasterHUD()
 {
-	if(BlasterGameState == nullptr || BlasterHUD == nullptr) return;
+	if(BlasterGameState == nullptr) return;
 
-	BlasterGameState->OnMatchStateSet.AddDynamic(BlasterHUD, &ABlasterHUD::OnMatchStateSet);
-	BlasterHUD->OnMatchStateSet(BlasterGameState->GetMatchState());
-}
-
-/* HUD */
-
-void ABlasterPlayerController::UpdateHUD_All()
-{
-
-	if(BlasterPlayerState)
+	if(BlasterHUD)
 	{
-		BlasterPlayerState->UpdateHUD_All();
+		BlasterGameState->OnMatchStateSet.AddDynamic(BlasterHUD, &ABlasterHUD::OnMatchStateSet);
+		BlasterHUD->OnMatchStateSet(BlasterGameState->GetMatchState());
 	}
-
-	// Hide Overlays
-	HideWeaponOverlay();
-}
-
-/* Character Overlay */
-
-void ABlasterPlayerController::SetHUD_Health(float Health)
-{
-	if(BlasterHUD == nullptr || BlasterHUD->GetCharacterOverlay() == nullptr) return;
-	
-	BlasterHUD->GetCharacterOverlay()->SetHealth(Health);
-}
-
-void ABlasterPlayerController::SetHUD_MaxHealth(float MaxHealth)
-{
-	if(BlasterHUD == nullptr || BlasterHUD->GetCharacterOverlay() == nullptr) return;
-	
-	BlasterHUD->GetCharacterOverlay()->SetMaxHealth(MaxHealth);
 }
 
 /* Weapon Overlay */
@@ -242,43 +223,4 @@ void ABlasterPlayerController::ShowWeaponOverlay() const
 	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
 
 	BlasterHUD->GetWeaponOverlay()->SetVisibility(ESlateVisibility::Visible);
-}
-
-/* Player State Overlay */
-
-void ABlasterPlayerController::SetHUDScore(float Score)
-{
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-
-	bool bHUDValid = BlasterHUD
-	&& BlasterHUD->GetCharacterOverlay()
-	&& BlasterHUD->GetCharacterOverlay()->ScoreText;
-
-	if(bHUDValid)
-	{
-		const FString ScoreString = FString::Printf(TEXT("Score : %d"), FMath::FloorToInt(Score));
-		BlasterHUD->GetCharacterOverlay()->ScoreText->SetText(FText::FromString(ScoreString));
-	}
-}
-
-void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
-{
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-
-	bool bHUDValid = BlasterHUD
-	&& BlasterHUD->GetCharacterOverlay()
-	&& BlasterHUD->GetCharacterOverlay()->DefeatsText;
-
-	if(bHUDValid)
-	{
-		const FString DefeatsString = FString::Printf(TEXT("Defeats : %d"), Defeats);
-		BlasterHUD->GetCharacterOverlay()->DefeatsText->SetText(FText::FromString(DefeatsString));
-	}
-}
-
-void ABlasterPlayerController::SetHUD_CountdownTime(float CountdownTime) const
-{
-	if(BlasterHUD == nullptr || BlasterHUD->GetCurrentMatchTimerOverlay() == nullptr) return;
-
-	BlasterHUD->GetCurrentMatchTimerOverlay()->SetCountdownTime(CountdownTime);
 }

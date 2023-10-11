@@ -6,6 +6,9 @@
 #include "GameFramework/PlayerState.h"
 #include "BlasterPlayerState.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreUpdatedSiganature, int32, Score);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDefeatsUpdatedSiganature, int32, Defeats);
+
 UCLASS()
 class BLASTER_API ABlasterPlayerState : public APlayerState
 {
@@ -13,24 +16,25 @@ class BLASTER_API ABlasterPlayerState : public APlayerState
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	void AddScore(float ScoreAmount = 1.0f);
+	void AddDefeats(int32 DefeatsAmount = 1);
 
-	void UpdateHUD_All();
-
-	void AddToScore(float ScoreAmount);
-	void UpdateHUD_Score();
-
-	void AddToDefeats(int32 DefeatsAmount);
-	void UpdateHUD_Defeats();
-
-	// 레플리케이션 노티파이
 	virtual void OnRep_Score() override;
 	
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
-private:
-	class ABlasterPlayerController* Controller;
+	/* For UI */
+	UPROPERTY(BlueprintAssignable, Category = UI)
+	FScoreUpdatedSiganature OnScoreUpdated;
 
+	UPROPERTY(BlueprintAssignable, Category = UI)
+	FDefeatsUpdatedSiganature OnDefeatsUpdated;
+
+	void ManualUpdateHUD();
+
+private:
 	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
 	int32 Defeats;
 };

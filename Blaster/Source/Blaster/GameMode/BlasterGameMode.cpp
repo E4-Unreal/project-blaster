@@ -71,7 +71,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 
 	if(AttackerPlayerState && AttackerPlayerState != VictimPlayerState)
 	{
-		AttackerPlayerState->AddToScore(1.f);
+		AttackerPlayerState->AddScore(1.f);
 
 		// TODO PlayerState에서 GameState 직접 업데이트?
 		if(ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>())
@@ -82,7 +82,7 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 
 	if(VictimPlayerState)
 	{
-		VictimPlayerState->AddToDefeats(1.f);
+		VictimPlayerState->AddDefeats(1.f);
 	}
 
 	if(EliminatedCharacter)

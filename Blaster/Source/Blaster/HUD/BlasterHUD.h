@@ -51,6 +51,23 @@ public:
 	void HideWaitingToStartOverlay();
 	void HideWaitingPostMatchOverlay();
 
+	/* Set Overlay Value */
+	// Character Overlay
+	UFUNCTION()
+	void SetHealth(float Health);
+	
+	UFUNCTION()
+	void SetMaxHealth(float MaxHealth);
+
+	UFUNCTION()
+	void SetScore(int32 Score);
+
+	UFUNCTION()
+	void SetDefeats(int32 Defeats);
+
+	// Match Timer Overlay
+	void SetCountdownTime(float CountdownTime);
+
 private:
 	/* 사용자 위젯 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))

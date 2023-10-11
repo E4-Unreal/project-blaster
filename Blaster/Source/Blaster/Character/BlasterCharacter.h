@@ -49,7 +49,6 @@ public:
 	void MulticastEliminate();
 
 	/* HUD */
-	//void UpdateHUD_All();
 	void ManualUpdateHUD();
 
 protected:

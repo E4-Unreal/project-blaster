@@ -19,7 +19,8 @@ public:
 	virtual void AcknowledgePossession(APawn* P) override; // Set Pawn
 
 private:
-	/* Blaster Game State */
+	/* UI Model */
+	// Blaster Game State
 	class ABlasterGameState* BlasterGameState;
 	void SetBlasterGameState(AGameStateBase* GameState);
 	void InitBlasterGameState();
@@ -27,7 +28,7 @@ private:
 	DECLARE_EVENT(ThisClass, FGameStateSetEvent);
 	FGameStateSetEvent OnBlasterGameStateSet;
 
-	/* Blaster Character */
+	// Blaster Character
 	class ABlasterCharacter* BlasterCharacter;
 	void SetBlasterCharacter(APawn* InPawn);
 	void InitBlasterCharacter();
@@ -35,7 +36,7 @@ private:
 	DECLARE_EVENT(ThisClass, FCharacterSetEvent);
 	FCharacterSetEvent OnBlasterCharacterSet;
 
-	/* Blaster Player State */
+	// Blaster Player State
 	class ABlasterPlayerState* BlasterPlayerState;
 	void SetBlasterPlayerState(APlayerState* InPlayerState);
 	void InitBlasterPlayerState();
@@ -43,7 +44,8 @@ private:
 	DECLARE_EVENT(ThisClass, FPlayerStateSetEvent);
 	FPlayerStateSetEvent OnBlasterPlayerStateSet;
 
-	/* Blaster HUD */
+	/* UI View */
+	// HUD
 	class ABlasterHUD* BlasterHUD;
 	void SetBlasterHUD(AHUD* HUD);
 	void InitBlasterHUD();
@@ -52,29 +54,11 @@ private:
 	FHUDSetEvent OnBlasterHUDSet;
 
 public:
-	// TODO Private로 이동 예정
-	/* Set HUD */
-	void UpdateHUD_All();
-
+	// TODO BlasterHUD로 옮길 예정
 	// Weapon
 	void SetHUDAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 CarriedAmmo);
 	void SetHUDMagCapacity(int32 MagCapacity);
 	void HideWeaponOverlay() const;
 	void ShowWeaponOverlay() const;
-
-	// Player State
-	void SetHUDScore(float Score);
-	void SetHUDDefeats(int32 Defeats);
-
-	// Match State
-	void SetHUD_CountdownTime(float CountdownTime) const;
-
-protected:
-	// Character
-	UFUNCTION()
-	void SetHUD_Health(float Health);
-	
-	UFUNCTION()
-	void SetHUD_MaxHealth(float MaxHealth);
 };
