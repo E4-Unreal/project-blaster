@@ -3,7 +3,7 @@
 
 #include "ProjectileWeapon.h"
 
-#include "Projectile.h"
+#include "Projectile/Projectile.h"
 #include "Engine/SkeletalMeshSocket.h"
 
 void AProjectileWeapon::RequestFire(const FVector& HitTarget)
@@ -26,25 +26,20 @@ void AProjectileWeapon::RequestFire(const FVector& HitTarget)
 void AProjectileWeapon::SpawnBullet_Implementation(const FVector_NetQuantize& MuzzleLocation,
 	const FVector_NetQuantize& Direction)
 {
-	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
-	
-	if(ProjectileClass && InstigatorPawn)
+	if(ProjectileClass == nullptr) return;
+
+	if(UWorld* World = GetWorld())
 	{
 		const FRotator TargetRotation = Direction.Rotation();
 		
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = GetOwner();
-		SpawnParams.Instigator = InstigatorPawn;
-			
-		UWorld* World = GetWorld();
-		if(World)
-		{
-			World->SpawnActor<AProjectile>(
-				ProjectileClass,
-				MuzzleLocation,
-				TargetRotation,
-				SpawnParams
-			);
-		}
+		SpawnParams.Instigator = GetInstigator();
+		World->SpawnActor<AProjectile>(
+			ProjectileClass,
+			MuzzleLocation,
+			TargetRotation,
+			SpawnParams
+		);
 	}
 }

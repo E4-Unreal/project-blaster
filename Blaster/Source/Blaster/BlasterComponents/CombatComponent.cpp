@@ -83,6 +83,7 @@ void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 	if(OldWeapon)
 	{
 		OldWeapon->SetOwner(nullptr);
+		OldWeapon->SetInstigator(nullptr);
 		OldWeapon->UnEquipped();
 
 		// 기존 무기 장비 해제 시
@@ -94,6 +95,7 @@ void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 	if(NewWeapon)
 	{
 		NewWeapon->SetOwner(Character);
+		NewWeapon->SetInstigator(Character);
 		NewWeapon->Equipped(HandSocket, Character->GetMesh());
 		CarriedAmmo = CarriedAmmoMap.Contains(NewWeapon->GetWeaponType()) ? CarriedAmmoMap[NewWeapon->GetWeaponType()] : 0;
 		UpdateHUDCarriedAmmo();
@@ -442,8 +444,10 @@ void UCombatComponent::OnRep_CarriedAmmo()
 
 void UCombatComponent::InitializeCarriedAmmo()
 {
+	// TODO TMap For Loop로 설정?
 	CarriedAmmoMap.Emplace(EWeaponType::EW_AssaultRifle, StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EW_RocketLauncher, StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_Pistol, StartingRocketAmmo);
 }
 
 void UCombatComponent::UpdateHUDCarriedAmmo()

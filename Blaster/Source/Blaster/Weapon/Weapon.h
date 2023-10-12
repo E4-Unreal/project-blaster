@@ -18,15 +18,18 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetOwner(AActor* NewOwner) override;
 
+	/* Equip */
 	void Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshComponent* InMesh);
 	void UnEquipped();
 	void ShowPickupWidget(bool bShowWidget);
 
 	/* Fire */
-	// 클라이언트 측에서 필요한 작업을 마친 다음 서버 RPC 호출
+	// 클라이언트 측에서 필요한 작업을 마친 다음 서버 RPC 호출.
+	// 총알 스폰 혹은 히트 스캔 등 서버 전용 작업
 	virtual void RequestFire(const FVector& HitTarget);
 
 	// 멀티캐스트 RPC에서 사용
+	// 탄피 배출, 애니메이션 재생 등 공통 작업
 	virtual void Fire();
 
 	/* Reload */
