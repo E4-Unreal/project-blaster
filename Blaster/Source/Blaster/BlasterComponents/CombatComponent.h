@@ -125,7 +125,7 @@ private:
 	void StartFireTimer();
 	void FireTimerFinished();
 
-	// 현재 장착된 무기의 여분 탄약
+	/* Carried Ammo */
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
 
@@ -142,6 +142,15 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingPistolAmmo = 30;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSMGAmmo = 60;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingShotgunAmmo = 16;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSniperRifleAmmo = 10;
 	
 	void InitializeCarriedAmmo();
 

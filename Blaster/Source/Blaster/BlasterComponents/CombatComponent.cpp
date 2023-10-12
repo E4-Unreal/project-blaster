@@ -94,7 +94,8 @@ void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 	/* New Weapon */
 	if(NewWeapon)
 	{
-		NewWeapon->SetOwner(Character);
+		// TODO Pickup Weapon은 World가 Owner, 직접 가지고 온 무기는 Character가 Owner? 스폰의 주체를 Owner로 할까?
+		NewWeapon->SetOwner(Character); 
 		NewWeapon->SetInstigator(Character);
 		NewWeapon->Equipped(HandSocket, Character->GetMesh());
 		CarriedAmmo = CarriedAmmoMap.Contains(NewWeapon->GetWeaponType()) ? CarriedAmmoMap[NewWeapon->GetWeaponType()] : 0;
@@ -447,7 +448,10 @@ void UCombatComponent::InitializeCarriedAmmo()
 	// TODO TMap For Loop로 설정?
 	CarriedAmmoMap.Emplace(EWeaponType::EW_AssaultRifle, StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EW_RocketLauncher, StartingRocketAmmo);
-	CarriedAmmoMap.Emplace(EWeaponType::EW_Pistol, StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_Pistol, StartingPistolAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_SMG, StartingSMGAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_ShotGun, StartingShotgunAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_SniperRifle, StartingSniperRifleAmmo);
 }
 
 void UCombatComponent::UpdateHUDCarriedAmmo()

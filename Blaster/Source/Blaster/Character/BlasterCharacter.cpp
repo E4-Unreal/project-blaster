@@ -184,6 +184,15 @@ void ABlasterCharacter::PlayReloadMontage()
 		case EWeaponType::EW_Pistol:
 			SectionName = "Pistol";
 			break;
+		case EWeaponType::EW_SMG:
+			SectionName = "SMG";
+			break;
+		case EWeaponType::EW_ShotGun:
+			SectionName = "ShotGun";
+			break;
+		case EWeaponType::EW_SniperRifle:
+			SectionName = "SniperRifle";
+			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}

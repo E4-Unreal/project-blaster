@@ -44,11 +44,16 @@ void AHitScanWeapon::HitScan_Implementation(const FVector_NetQuantize& MuzzleLoc
 	FHitResult HitResult;
 	const FVector Start = MuzzleLocation;
 	const FVector End = Start + Direction * 1.25f;
+	FCollisionQueryParams CollisionQueryParams;
+	CollisionQueryParams.AddIgnoredActor(this);
+	CollisionQueryParams.AddIgnoredActor(Owner);
+	
 	World->LineTraceSingleByChannel(
 		HitResult,
 		Start,
 		End,
-		ECC_Visibility
+		ECC_Visibility,
+		CollisionQueryParams
 	);
 
 	HitScanResult = HitResult;

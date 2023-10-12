@@ -3,7 +3,6 @@
 
 #include "Projectile.h"
 
-#include "Blaster/Blaster.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,11 +22,10 @@ AProjectile::AProjectile()
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
 	SetRootComponent(CollisionBox);
 	CollisionBox->SetCollisionObjectType(ECC_WorldDynamic);
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	CollisionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
+	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionBox->SetCollisionResponseToAllChannels(ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	// Projectile Movement
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -62,8 +60,8 @@ void AProjectile::BeginPlay()
 	if(HasAuthority())
 	{
 		// 충돌 무시
-		if(Owner) CollisionBox->IgnoreActorWhenMoving(GetOwner(), true);
-		if(GetInstigator()) CollisionBox->IgnoreActorWhenMoving(GetInstigator(), true);
+		if(Owner) CollisionBox->IgnoreActorWhenMoving(GetOwner(), true); // 무기
+		if(GetInstigator()) CollisionBox->IgnoreActorWhenMoving(GetInstigator(), true); // 캐릭터
 
 		// OnHit 이벤트 바인딩
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);

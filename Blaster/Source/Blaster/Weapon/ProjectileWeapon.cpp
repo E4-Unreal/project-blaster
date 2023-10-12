@@ -33,7 +33,7 @@ void AProjectileWeapon::SpawnBullet_Implementation(const FVector_NetQuantize& Mu
 		const FRotator TargetRotation = Direction.Rotation();
 		
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = GetOwner();
+		SpawnParams.Owner = this;
 		SpawnParams.Instigator = GetInstigator();
 		World->SpawnActor<AProjectile>(
 			ProjectileClass,
