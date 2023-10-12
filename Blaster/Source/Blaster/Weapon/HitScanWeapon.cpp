@@ -5,7 +5,16 @@
 
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
+
+void AHitScanWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, HitScanResult);
+}
 
 void AHitScanWeapon::RequestFire(const FVector& HitTarget)
 {
@@ -25,7 +34,7 @@ void AHitScanWeapon::RequestFire(const FVector& HitTarget)
 }
 
 void AHitScanWeapon::HitScan_Implementation(const FVector_NetQuantize& MuzzleLocation,
-	const FVector_NetQuantize& Direction)
+                                            const FVector_NetQuantize& Direction)
 {
 	// 유효성 검사
 	const UWorld* World = GetWorld();
@@ -42,27 +51,44 @@ void AHitScanWeapon::HitScan_Implementation(const FVector_NetQuantize& MuzzleLoc
 		ECC_Visibility
 	);
 
-	/* 스캔 실패 */
-	if(!HitResult.bBlockingHit) return;
+	HitScanResult = HitResult;
+	SpawnBeamParticles();
 
-	/* 스캔 성공 */
-	// 데미지 적용
-	UGameplayStatics::ApplyDamage(
-			HitResult.GetActor(),
-			Damage,
-			GetInstigatorController(),
-			this,
-			UDamageType::StaticClass()
-		);
+	// 스캔 성공 시
+	if(HitScanResult.bBlockingHit)
+	{
+		SpawnHitEffects();
+		
+		// 데미지 적용
+		UGameplayStatics::ApplyDamage(
+				HitResult.GetActor(),
+				Damage,
+				GetInstigatorController(),
+				this,
+				UDamageType::StaticClass()
+			);
+	}
+}
 
-	// 피격 효과 스폰
+void AHitScanWeapon::OnRep_HitScanResult()
+{
+	SpawnBeamParticles();
+	
+	if(HitScanResult.bBlockingHit)
+	{
+		SpawnHitEffects();
+	}
+}
+
+void AHitScanWeapon::SpawnHitEffects()
+{
 	if(ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(
 			this,
 			ImpactParticles,
-			HitResult.ImpactPoint,
-			HitResult.ImpactNormal.Rotation()
+			HitScanResult.ImpactPoint,
+			HitScanResult.ImpactNormal.Rotation()
 		);
 	}
 
@@ -71,7 +97,23 @@ void AHitScanWeapon::HitScan_Implementation(const FVector_NetQuantize& MuzzleLoc
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			ImpactSound,
-			HitResult.ImpactPoint
+			HitScanResult.ImpactPoint
 		);
+	}
+}
+
+void AHitScanWeapon::SpawnBeamParticles()
+{
+	UParticleSystemComponent* Beam =
+		UGameplayStatics::SpawnEmitterAtLocation(
+			this,
+			BeamParticles,
+			HitScanResult.TraceStart
+		);
+	
+	if(Beam)
+	{
+		const FVector Target = HitScanResult.bBlockingHit ? HitScanResult.ImpactPoint : HitScanResult.TraceEnd;
+		Beam->SetVectorParameter(FName("Target"), Target);
 	}
 }
