@@ -36,6 +36,9 @@ AWeapon::AWeapon()
 	// PickupWidget
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	PickupWidget->SetupAttachment(RootComponent);
+
+	PickupWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	PickupWidget->SetDrawAtDesiredSize(true);
 }
 
 void AWeapon::BeginPlay()
