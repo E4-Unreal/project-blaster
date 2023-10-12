@@ -14,7 +14,6 @@ class BLASTER_API AProjectile : public AActor
 public:
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
-	virtual void Destroyed() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -25,6 +24,15 @@ protected:
 	// 데미지
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
+
+	UFUNCTION()
+	virtual void ApplyDamage(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	UFUNCTION()
+	virtual void SpawnHitEffects();
+
+	UFUNCTION()
+	virtual void HandleDestroy();
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -46,4 +54,5 @@ private:
 	class USoundCue* ImpactSound;
 	
 public:
+	UShapeComponent* GetCollisionComponent() const;
 };
