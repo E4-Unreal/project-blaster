@@ -47,9 +47,9 @@ void AProjectileRocket::ApplyDamage(UPrimitiveComponent* HitComponent, AActor* O
 void AProjectileRocket::HandleDestroy()
 {
 	// 나이아가라 시스템 비활성화
-	if(TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())
+	if(TrailSystemComponent)
 	{
-		TrailSystemComponent->GetSystemInstanceController()->Deactivate();
+		TrailSystemComponent->Deactivate();
 	}
 
 	// Loop Sound 중지
@@ -63,22 +63,6 @@ void AProjectileRocket::HandleDestroy()
 	{
 		RocketMesh->SetVisibility(false);
 	}
-	
-	// 콜리전 비활성화
-	if(GetCollisionComponent())
-	{
-		GetCollisionComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
 
-	// Destroy 타이머 설정
-	FTimerHandle TimerHandle;
-	GetWorldTimerManager().SetTimer(
-		TimerHandle,
-		FTimerDelegate::CreateLambda([this]()
-		{
-			Destroy();
-		}),
-		3.f,
-		false
-	);
+	Super::HandleDestroy();
 }

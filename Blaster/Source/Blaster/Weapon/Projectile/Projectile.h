@@ -13,15 +13,22 @@ class BLASTER_API AProjectile : public AActor
 
 public:
 	AProjectile();
-	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
 
+	/* Hit */
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	UPROPERTY(ReplicatedUsing = OnRep_HitResult)
+	FHitResult HitResult;
+
+	UFUNCTION()
+	virtual void OnRep_HitResult();
 	
-	// 데미지
+	/* Damage */
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
 
@@ -52,7 +59,4 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
-	
-public:
-	UShapeComponent* GetCollisionComponent() const;
 };
