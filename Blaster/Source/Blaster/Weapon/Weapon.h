@@ -24,31 +24,25 @@ public:
 	void ShowPickupWidget(bool bShowWidget);
 
 	/* Fire */
-	// 클라이언트 측에서 필요한 작업을 마친 다음 서버 RPC 호출.
-	// 총알 스폰 혹은 히트 스캔 등 서버 전용 작업
-	virtual void RequestFire(const FVector& HitTarget);
-
-	// 멀티캐스트 RPC에서 사용
-	// 탄피 배출, 애니메이션 재생 등 공통 작업
-	virtual void Fire();
+	virtual void Fire(const FVector& HitTarget);
 
 	/* Reload */
 	void AddAmmo(const int32 AmmoAmount);
 
 	/* HUD 크로스헤어 */
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshairs")
 	UTexture2D* CrosshairsCenter;
 	
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshairs")
 	UTexture2D* CrosshairsLeft;
 	
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshairs")
 	UTexture2D* CrosshairsRight;
 
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshairs")
 	UTexture2D* CrosshairsTop;
 
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Crosshairs")
 	UTexture2D* CrosshairsBottom;
 
 	/* HUD 총알 */
@@ -80,25 +74,32 @@ protected:
 		int32 OtherBodyIndex
 		);
 
+	/* Fire */
+	UFUNCTION(Server, Reliable)
+	virtual void ServerFire(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& HitTarget);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	virtual void MulticastFire();
+
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon|Properties")
 	class UWidgetComponent* PickupWidget;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Animation")
 	UAnimationAsset* FireAnimation;
 
 	// TODO Projectile Weapon 클래스?
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	TSubclassOf<class ACasing> CasingClass;
 	
 	// 총알
-	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon|Properties")
 	int32 Ammo;
 
 	void SpendRound();
@@ -106,7 +107,7 @@ private:
 	UFUNCTION()
 	void OnRep_Ammo();
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	int32 MagCapacity;
 
 	UPROPERTY()
@@ -116,17 +117,17 @@ private:
 	class ABlasterPlayerController* BlasterOwningController;
 
 	// 조준 시 줌 인
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	float ZoomedFOV = 30.f;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	float ZoomInterpSpeed = 20.f;
 
 	// 연사 기능
-	UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	float FireDelay = .15f;
 	
-	UPROPERTY(EditAnywhere, Category = Combat)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	bool bIsAutomatic = true;
 
 	// For SetOwner && OnRep_Owner
@@ -136,10 +137,10 @@ private:
 	EWeaponType WeaponType;
 
 	/* Equip */
-	UPROPERTY(EditAnywhere, Category = Sound)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Sound")
 	class USoundCue* EquipSound;
 
-	UPROPERTY(EditAnywhere, Category = Sound)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Sound")
 	float StartTime = 0.f;
 	
 public:

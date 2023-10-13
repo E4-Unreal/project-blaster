@@ -4,33 +4,18 @@
 #include "ProjectileWeapon.h"
 
 #include "Projectile/Projectile.h"
-#include "Engine/SkeletalMeshSocket.h"
 
-void AProjectileWeapon::RequestFire(const FVector& HitTarget)
+void AProjectileWeapon::ServerFire_Implementation(const FVector_NetQuantize& MuzzleLocation,
+	const FVector_NetQuantize& HitTarget)
 {
-	Super::RequestFire(HitTarget);
+	Super::ServerFire_Implementation(MuzzleLocation, HitTarget);
 
-	// Muzzle Location
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	const FVector MuzzleLocation = MuzzleFlashSocket == nullptr
-	? GetActorLocation()
-	: MuzzleFlashSocket->GetSocketLocation(GetWeaponMesh());
-
-	// Direction
-	const FVector Direction = HitTarget - MuzzleLocation;
-
-	// Spawn Bullet On Server
-	SpawnBullet(MuzzleLocation, Direction);
-}
-
-void AProjectileWeapon::SpawnBullet_Implementation(const FVector_NetQuantize& MuzzleLocation,
-	const FVector_NetQuantize& Direction)
-{
+	// Spawn Bullet
 	if(ProjectileClass == nullptr) return;
 
 	if(UWorld* World = GetWorld())
 	{
-		const FRotator TargetRotation = Direction.Rotation();
+		const FRotator TargetRotation = (HitTarget - MuzzleLocation).Rotation();
 		
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;

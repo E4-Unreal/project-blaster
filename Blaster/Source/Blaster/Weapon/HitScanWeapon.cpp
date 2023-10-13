@@ -3,51 +3,35 @@
 
 #include "HitScanWeapon.h"
 
-#include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 
-void AHitScanWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AHitScanWeapon::ServerFire_Implementation(const FVector_NetQuantize& MuzzleLocation,
+	const FVector_NetQuantize& HitTarget)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	Super::ServerFire_Implementation(MuzzleLocation, HitTarget);
 
-	DOREPLIFETIME(ThisClass, HitScanResults);
-}
-
-void AHitScanWeapon::RequestFire(const FVector& HitTarget)
-{
-	Super::RequestFire(HitTarget);
-
-	// TODO MuzzleFlashSocket 멤버 변수화?
-	// Muzzle Location
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	const FVector MuzzleLocation = MuzzleFlashSocket == nullptr
-	? GetActorLocation()
-	: MuzzleFlashSocket->GetSocketLocation(GetWeaponMesh());
-
-	// Hit Scan On Server. 결과는 Hit Scan Result에 저장됨.
-	HandleBulletAction(MuzzleLocation, HitTarget);
-}
-
-void AHitScanWeapon::HandleBulletAction_Implementation(const FVector_NetQuantize& MuzzleLocation,
-                                            const FVector_NetQuantize& HitTarget)
-{
 	// Hit Scan
 	FHitResult HitResult;
 	FCollisionQueryParams CollisionQueryParams;
 	CollisionQueryParams.AddIgnoredActor(this);
 	CollisionQueryParams.AddIgnoredActor(Owner);
 
-	HitScanResults.Empty(Pellets);
+	TArray<FHitResult> HitScanResults;
+	HitScanResults.Reserve(Pellets);
+	
+	TMap<AActor*, int32> HitMap;
+	HitMap.Reserve(Pellets);
+	
 	for(int i = 0; i < Pellets; i++)
 	{
+		// 라인 트레이스
 		FVector TraceEnd;
-		if(bDisableScatter)
-			HitScan(MuzzleLocation, HitTarget, TraceEnd);
+		if(bUseScatter)
+			TraceEndWithScatter(MuzzleLocation, HitTarget, TraceEnd);
 		else
-			HitScanWithScatter(MuzzleLocation, HitTarget, TraceEnd);
+			TraceEnd = MuzzleLocation + (HitTarget - MuzzleLocation) * 1.25f;
 	
 		GetWorld()->LineTraceSingleByChannel(
 			HitResult,
@@ -57,37 +41,46 @@ void AHitScanWeapon::HandleBulletAction_Implementation(const FVector_NetQuantize
 			CollisionQueryParams
 		);
 		HitScanResults.Emplace(HitResult);
+
+		// Actor마다 Hit 횟수 카운팅
+		if(HitResult.bBlockingHit)
+		{
+			AActor* HitActor = HitResult.GetActor();
+			if(HitMap.Contains(HitActor))
+			{
+				HitMap[HitActor]++;
+			}
+			else
+			{
+				HitMap.Emplace(HitActor, 1);
+			}
+		}
 	}
 
 	// Hit Scan 결과 처리
-	for (const FHitResult& HitScanResult : HitScanResults)
+	MulticastHandleHitResults(HitScanResults);
+	for (const auto& HitPair : HitMap)
 	{
-		// 데미지 적용
-		if(HitScanResult.bBlockingHit)
-		{
-			UGameplayStatics::ApplyDamage(
-				HitScanResult.GetActor(),
-				Damage,
+		UGameplayStatics::ApplyDamage(
+				HitPair.Key,
+				Damage * HitPair.Value,
 				GetInstigatorController(),
 				this,
 				UDamageType::StaticClass()
 			);
-		}
-
-		// For Server Player
-		SpawnBeamParticles(HitScanResult);
-		SpawnHitEffects(HitScanResult);
 	}
 }
 
-void AHitScanWeapon::HitScan(const FVector& MuzzleLocation, const FVector& HitTarget, FVector& TraceEnd)
+void AHitScanWeapon::MulticastHandleHitResults_Implementation(const TArray<FHitResult>& HitResults)
 {
-	const FVector Offset = HitTarget - MuzzleLocation;
-	
-	TraceEnd = MuzzleLocation + Offset * 1.25f;
+	for (const FHitResult& HitResult : HitResults)
+	{
+		SpawnBeamParticles(HitResult);
+		SpawnHitEffects(HitResult);
+	}
 }
 
-void AHitScanWeapon::HitScanWithScatter(const FVector& MuzzleLocation, const FVector& HitTarget, FVector& TraceEnd)
+void AHitScanWeapon::TraceEndWithScatter(const FVector& MuzzleLocation, const FVector& HitTarget, FVector& TraceEnd)
 {
 	const FVector Offset = HitTarget - MuzzleLocation;
 	FVector Direction = Offset.GetSafeNormal();
@@ -104,16 +97,6 @@ void AHitScanWeapon::HitScanWithScatter(const FVector& MuzzleLocation, const FVe
 	{
 		DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, false, 10.f);
 		DrawDebugSphere(GetWorld(), RandomTarget, 4.f, 12, FColor::Orange, false, 10.f);
-	}
-}
-
-void AHitScanWeapon::OnRep_HitScanResult()
-{
-	// Hit Scan 결과 처리
-	for (const FHitResult& HitScanResult : HitScanResults)
-	{
-		SpawnBeamParticles(HitScanResult);
-		SpawnHitEffects(HitScanResult);
 	}
 }
 

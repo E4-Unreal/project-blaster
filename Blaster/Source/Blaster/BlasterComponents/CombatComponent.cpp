@@ -375,10 +375,12 @@ void UCombatComponent::Fire()
 {
 	if(!CanFire()) return;
 
-	CrosshairsShootingFactor = .75f;
-
-	EquippedWeapon->RequestFire(HitTarget);
+	// Server RPC
+	EquippedWeapon->Fire(HitTarget);
 	ServerFire();
+
+	// For Local Player
+	CrosshairsShootingFactor = .75f;
 	StartFireTimer();
 }
 
@@ -391,8 +393,8 @@ void UCombatComponent::MulticastFire_Implementation()
 {
 	if(EquippedWeapon == nullptr || Character == nullptr) return;
 
+	// Handle Fire (Character)
 	Character->PlayFireMontage(bIsAiming);
-	EquippedWeapon->Fire();
 }
 
 bool UCombatComponent::CanFire()

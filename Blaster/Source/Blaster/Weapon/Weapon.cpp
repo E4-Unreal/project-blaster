@@ -137,12 +137,24 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::RequestFire(const FVector& HitTarget)
+void AWeapon::Fire(const FVector& HitTarget)
 {
-	// 자손 클래스에서 구현
+	// TODO MuzzleFlashSocket 멤버 변수화?
+	// Muzzle Location
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	const FVector MuzzleLocation = MuzzleFlashSocket == nullptr
+	? GetActorLocation()
+	: MuzzleFlashSocket->GetSocketLocation(GetWeaponMesh());
+	
+	ServerFire(MuzzleLocation, HitTarget);
 }
 
-void AWeapon::Fire()
+void AWeapon::ServerFire_Implementation(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& HitTarget)
+{
+	MulticastFire();
+}
+
+void AWeapon::MulticastFire_Implementation()
 {
 	// 무기 애니메이션 재생
 	if(FireAnimation)
