@@ -21,7 +21,10 @@ protected:
 	
 	/* Hit Scan */
 	UFUNCTION(Server, Reliable)
-	void HitScan(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& HitTarget);
+	void HandleBulletAction(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& HitTarget);
+
+	void HitScan(const FVector& MuzzleLocation, const FVector& HitTarget, FVector& TraceEnd);
+	void HitScanWithScatter(const FVector& MuzzleLocation, const FVector& HitTarget, FVector& TraceEnd);
 
 	void SpawnHitEffects(const FHitResult& HitResult);
 	void SpawnBeamParticles(const FHitResult& HitResult);
@@ -39,6 +42,9 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	float SphereRadius = 75.f;
+
+	UPROPERTY(EditAnywhere)
+	int32 Pellets = 1;
 	
 	/* 피격 효과 */
 	UPROPERTY(EditAnywhere)
@@ -51,7 +57,7 @@ private:
 	UParticleSystem* BeamParticles;
 
 	UPROPERTY(ReplicatedUsing = OnRep_HitScanResult)
-	FHitResult HitScanResult;
+	TArray<FHitResult> HitScanResults;
 
 	UFUNCTION()
 	virtual void OnRep_HitScanResult();
