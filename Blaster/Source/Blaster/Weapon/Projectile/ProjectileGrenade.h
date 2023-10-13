@@ -4,27 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "Projectile.h"
-#include "ProjectileRocket.generated.h"
+#include "ProjectileGrenade.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectileRocket : public AProjectile
+class BLASTER_API AProjectileGrenade : public AProjectile
 {
 	GENERATED_BODY()
 
 public:
-	AProjectileRocket();
+	AProjectileGrenade();
+	virtual void Destroyed() override;
 
 protected:
-	virtual void ApplyDamage(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-	virtual void HandleDestroy() override;
+	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void OnProjectileBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity);
 
 private:
-	/* Trail */
+	UPROPERTY(EditAnywhere)
+	USoundCue* BounceSound;
 
-	/* Sound */
-	UPROPERTY(VisibleAnywhere)
-	UAudioComponent* InAirLoopAudioComponent;
-	
 	/* Damage */
 	UPROPERTY(EditAnywhere)
 	float MinimumDamage = 10.f;
@@ -37,5 +37,4 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float DamageFalloff = 1.f;
-
 };

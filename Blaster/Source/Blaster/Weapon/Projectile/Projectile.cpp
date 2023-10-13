@@ -3,6 +3,7 @@
 
 #include "Projectile.h"
 
+#include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -27,9 +28,18 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
+	// Projectile Mesh
+	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
+	ProjectileMesh->SetupAttachment(RootComponent);
+	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	// Projectile Movement
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+
+	// Trail System Component
+	TrailSystemComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TrailSystemComponent"));
+	TrailSystemComponent->SetupAttachment(RootComponent);
 }
 
 void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -126,6 +136,11 @@ void AProjectile::HandleDestroy()
 		TracerComponent->Deactivate();
 	}
 
+	SetDestroyTimer();
+}
+
+void AProjectile::SetDestroyTimer()
+{
 	// Destroy 타이머 설정
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(
@@ -134,7 +149,7 @@ void AProjectile::HandleDestroy()
 		{
 			Destroy();
 		}),
-		3.f,
+		DestroyTime,
 		false
 	);
 }

@@ -27,7 +27,6 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	WeaponMesh->SetEnableGravity(true);
 
 	// AreaSphere
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
@@ -224,11 +223,13 @@ void AWeapon::EnableCollisionAndPhysics(bool Enable)
 	if(Enable)
 	{
 		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
 	}
 	else
 	{
 		ShowPickupWidget(false);
 		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
 	}
 }
 

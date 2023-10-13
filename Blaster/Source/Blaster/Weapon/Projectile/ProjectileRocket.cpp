@@ -5,22 +5,11 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
-#include "NiagaraSystemInstanceController.h"
 #include "Components/AudioComponent.h"
-#include "Components/ShapeComponent.h"
 
 
 AProjectileRocket::AProjectileRocket()
 {
-	// Rocket Mesh
-	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
-	RocketMesh->SetupAttachment(RootComponent);
-	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	// Trail System Component
-	TrailSystemComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TrailSystemComponent"));
-	TrailSystemComponent->SetupAttachment(RootComponent);
-
 	// In Air Loop Audio Component
 	InAirLoopAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("InAirLoopAudioComponent"));
 	InAirLoopAudioComponent->SetupAttachment(RootComponent);
@@ -47,9 +36,9 @@ void AProjectileRocket::ApplyDamage(UPrimitiveComponent* HitComponent, AActor* O
 void AProjectileRocket::HandleDestroy()
 {
 	// 나이아가라 시스템 비활성화
-	if(TrailSystemComponent)
+	if(GetTrailSystem())
 	{
-		TrailSystemComponent->Deactivate();
+		GetTrailSystem()->Deactivate();
 	}
 
 	// Loop Sound 중지
@@ -59,9 +48,9 @@ void AProjectileRocket::HandleDestroy()
 	}
 	
 	// 메시 숨기기
-	if(RocketMesh)
+	if(GetProjectileMesh())
 	{
-		RocketMesh->SetVisibility(false);
+		GetProjectileMesh()->SetVisibility(false);
 	}
 
 	Super::HandleDestroy();

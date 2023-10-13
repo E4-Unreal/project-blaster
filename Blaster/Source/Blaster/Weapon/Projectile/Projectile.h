@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
+class UNiagaraComponent;
+
 UCLASS()
 class BLASTER_API AProjectile : public AActor
 {
@@ -22,6 +24,7 @@ protected:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	// TODO Multicast
 	UPROPERTY(ReplicatedUsing = OnRep_HitResult)
 	FHitResult HitResult;
 
@@ -38,20 +41,11 @@ protected:
 	UFUNCTION()
 	virtual void SpawnHitEffects();
 
+	/* Destroy Timer */
 	UFUNCTION()
 	virtual void HandleDestroy();
 
-private:
-	UPROPERTY(EditAnywhere)
-	class UBoxComponent* CollisionBox;
-
-	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
-
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* Tracer;
-
-	UParticleSystemComponent* TracerComponent;
+	void SetDestroyTimer();
 
 	// 피격 효과
 	UPROPERTY(EditAnywhere)
@@ -59,4 +53,32 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
+
+private:
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* CollisionBox;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	UNiagaraComponent* TrailSystemComponent;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* Tracer;
+
+	// TODO 리팩토링
+	UParticleSystemComponent* TracerComponent;
+
+	/* Destroy Timer */
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
+
+protected:
+	FORCEINLINE UNiagaraComponent* GetTrailSystem() const { return TrailSystemComponent; }
+	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
+	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovementComponent; }
 };
