@@ -16,21 +16,30 @@ public:
 	virtual void RequestFire(const FVector& HitTarget) override;
 
 protected:
-	/* Hit Scan */
-	UPROPERTY(ReplicatedUsing = OnRep_HitScanResult)
-	FHitResult HitScanResult;
-
-	UFUNCTION()
-	virtual void OnRep_HitScanResult();
-
-private:
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
-
+	
 	/* Hit Scan */
 	UFUNCTION(Server, Reliable)
-	void HitScan(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& Direction);
+	void HitScan(const FVector_NetQuantize& MuzzleLocation, const FVector_NetQuantize& HitTarget);
 
+	void SpawnHitEffects(const FHitResult& HitResult);
+	void SpawnBeamParticles(const FHitResult& HitResult);
+
+private:
+	/* 탄 퍼짐 */
+	UPROPERTY(EditAnywhere)
+	bool bDrawDebugScatter;
+	
+	UPROPERTY(EditAnywhere)
+	bool bDisableScatter;
+	
+	UPROPERTY(EditAnywhere)
+	float DistanceToSphere = 800.f;
+	
+	UPROPERTY(EditAnywhere)
+	float SphereRadius = 75.f;
+	
 	/* 피격 효과 */
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
@@ -41,6 +50,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BeamParticles;
 
-	void SpawnHitEffects();
-	void SpawnBeamParticles();
+	UPROPERTY(ReplicatedUsing = OnRep_HitScanResult)
+	FHitResult HitScanResult;
+
+	UFUNCTION()
+	virtual void OnRep_HitScanResult();
 };
