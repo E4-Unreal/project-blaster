@@ -51,6 +51,10 @@ public:
 	/* HUD */
 	void ManualUpdateHUD();
 
+	/* 저격 조준경 */
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
+
 protected:
 	virtual void BeginPlay() override;
 
