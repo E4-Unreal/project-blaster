@@ -15,47 +15,29 @@ class BLASTER_API AProjectile : public AActor
 
 public:
 	AProjectile();
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	virtual void BeginPlay() override;
-
-	/* Hit */
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	// TODO Multicast
-	UPROPERTY(ReplicatedUsing = OnRep_HitResult)
-	FHitResult HitResult;
-
-	UFUNCTION()
-	virtual void OnRep_HitResult();
-	
 	/* Damage */
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
 
-	UFUNCTION()
-	virtual void ApplyDamage(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	UFUNCTION()
-	virtual void SpawnHitEffects();
-
-	/* Destroy Timer */
-	UFUNCTION()
-	virtual void HandleDestroy();
-
-	void SetDestroyTimer();
-
-	// 피격 효과
+	/* 피격 효과 */
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
 
+	UFUNCTION()
+	void SpawnHitEffects(const FVector& ImpactPoint, const FVector& ImpactNormal = FVector::ZeroVector);
+
+	/* Destroy */
+	virtual void Deactivate() const;
+
+	void SetDestroyTimer();
+
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere)
@@ -67,10 +49,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	UNiagaraComponent* TrailSystemComponent;
 
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* Tracer;
-
-	// TODO 리팩토링
+	UPROPERTY(VisibleAnywhere)
 	UParticleSystemComponent* TracerComponent;
 
 	/* Destroy Timer */
@@ -78,6 +57,7 @@ private:
 	float DestroyTime = 3.f;
 
 protected:
+	FORCEINLINE UBoxComponent* GetCollisionBox() const { return CollisionBox; }
 	FORCEINLINE UNiagaraComponent* GetTrailSystem() const { return TrailSystemComponent; }
 	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovementComponent; }

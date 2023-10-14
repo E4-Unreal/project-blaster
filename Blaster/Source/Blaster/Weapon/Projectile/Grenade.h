@@ -4,24 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Projectile.h"
-#include "ProjectileGrenade.generated.h"
+#include "Grenade.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectileGrenade : public AProjectile
+class BLASTER_API AGrenade : public AProjectile
 {
 	GENERATED_BODY()
 
 public:
-	AProjectileGrenade();
-	virtual void Destroyed() override;
+	AGrenade();
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastDeactivate(const FVector_NetQuantize& ActorLocation);
+
+	UFUNCTION()
+	void SetExplosionTimer();
+
+	UFUNCTION()
+	void Explode();
 
 	UFUNCTION()
 	void OnProjectileBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity);
 
 private:
+	UPROPERTY(EditAnywhere)
+	float ExplosionTime = 2.f;
+	
 	UPROPERTY(EditAnywhere)
 	USoundCue* BounceSound;
 

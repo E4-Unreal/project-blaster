@@ -3,20 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Projectile.h"
-#include "ProjectileRocket.generated.h"
+#include "HitProjectile.h"
+#include "Rocket.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectileRocket : public AProjectile
+class BLASTER_API ARocket : public AHitProjectile
 {
 	GENERATED_BODY()
 
 public:
-	AProjectileRocket();
+	ARocket();
 
 protected:
 	virtual void ApplyDamage(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-	virtual void HandleDestroy() override;
+	virtual void Deactivate() const override;
 
 private:
 	/* Trail */

@@ -40,75 +40,21 @@ AProjectile::AProjectile()
 	// Trail System Component
 	TrailSystemComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("TrailSystemComponent"));
 	TrailSystemComponent->SetupAttachment(RootComponent);
+
+	// Tracer Component
+	TracerComponent = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("TracerComponent"));
+	TracerComponent->SetupAttachment(RootComponent);
 }
 
-void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ThisClass, HitResult);
-}
-
-void AProjectile::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// TODO Component로 대체
-	if(Tracer)
-	{
-		TracerComponent = UGameplayStatics::SpawnEmitterAttached(
-			Tracer,
-			CollisionBox,
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition
-		);
-	}
-
-	/* 서버에서만 충돌 이벤트 설정 */
-	if(HasAuthority())
-	{
-		// 충돌 무시
-		if(Owner) CollisionBox->IgnoreActorWhenMoving(GetOwner(), true); // 무기
-		if(GetInstigator()) CollisionBox->IgnoreActorWhenMoving(GetInstigator(), true); // 캐릭터
-
-		// OnHit 이벤트 바인딩
-		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
-	}
-}
-
-void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit)
-{
-	HitResult = Hit;
-	ApplyDamage(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
-	
-	SpawnHitEffects();
-	HandleDestroy();
-}
-
-void AProjectile::OnRep_HitResult()
-{
-	SpawnHitEffects();
-	HandleDestroy();
-}
-
-void AProjectile::ApplyDamage(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-                              FVector NormalImpulse, const FHitResult& Hit)
-{
-	// 자손 클래스에서 설정
-}
-
-void AProjectile::SpawnHitEffects()
+void AProjectile::SpawnHitEffects(const FVector& ImpactPoint, const FVector& ImpactNormal)
 {
 	if(ImpactParticles)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(
 			this,
 			ImpactParticles,
-			HitResult.ImpactPoint,
-			HitResult.ImpactNormal.Rotation()
+			ImpactPoint,
+			ImpactNormal.Rotation()
 		);
 	}
 
@@ -117,26 +63,9 @@ void AProjectile::SpawnHitEffects()
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			ImpactSound,
-			HitResult.ImpactPoint
+			ImpactPoint
 		);
 	}
-}
-
-void AProjectile::HandleDestroy()
-{
-	// 콜리전 비활성화
-	if(CollisionBox)
-	{
-		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-
-	// Trail 비활성화
-	if(TracerComponent)
-	{
-		TracerComponent->Deactivate();
-	}
-
-	SetDestroyTimer();
 }
 
 void AProjectile::SetDestroyTimer()
@@ -152,4 +81,31 @@ void AProjectile::SetDestroyTimer()
 		DestroyTime,
 		false
 	);
+}
+
+void AProjectile::Deactivate() const
+{
+	// 메시 숨기기
+	if(ProjectileMesh)
+	{
+		ProjectileMesh->SetVisibility(false);
+	}
+	
+	// 콜리전 비활성화
+	if(CollisionBox)
+	{
+		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// Tracer 비활성화
+	if(TracerComponent)
+	{
+		TracerComponent->Deactivate();
+	}
+
+	// Trail 비활성화
+	if(TrailSystemComponent)
+	{
+		TrailSystemComponent->Deactivate();
+	}
 }

@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Projectile.h"
-#include "ProjectileBullet.generated.h"
+#include "HitProjectile.h"
+#include "Bullet.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectileBullet : public AProjectile
+class BLASTER_API ABullet : public AHitProjectile
 {
 	GENERATED_BODY()
 
