@@ -5,13 +5,25 @@
 #include "CoreMinimal.h"
 #include "Blaster/BlasterTypes/CombatState.h"
 #include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/Weapon/Weapon.h"
 #include "Blaster/Weapon/WeaponTypes.h"
 #include "Components/ActorComponent.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f
 
-class AWeapon;
+class AProjectile;
+
+UENUM(BlueprintType)
+enum class EWeaponSocket : uint8
+{
+	EWS_RightHand UMETA(DisplayName = "RightHand"),
+	EWS_LeftHand UMETA(DisplayName = "LeftHand"),
+
+	EWS_MAX UMETA(DisplayName = "Default Max")
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEquippedWeaponUpdatedSignature, AWeapon*, EquippedWeapon);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -25,13 +37,15 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// 서버에서만 호출할 것
-	void EquipWeapon(AWeapon* NewWeapon);
-	void DropEquippedWeapon();
+	/* HUD */
+	UPROPERTY(BlueprintAssignable)
+	FEquippedWeaponUpdatedSignature OnEquippedWeaponUpdated;
+
+	void ManualUpdateHUD();
 
 	/* Reload */
 	void Reload();
-	// TODO InterruptReloading
+	void AutoReload();
 	
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
@@ -42,17 +56,27 @@ public:
 	UFUNCTION(BlueprintPure)
 	int32 GetAmountToReload();
 
+	/* Throw Grenade */
+	UFUNCTION(BlueprintCallable)
+	void FinishThrowingGrenade();
+
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& SpawnLocation, const FVector_NetQuantize& Target);
+
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon(AWeapon* OldWeapon);
 
-	// Crosshairs
+	/* Crosshairs */
 	void TraceUnderCrosshair(FHitResult& TraceHitResult);
 	void SetHUDCrosshairs(float DeltaTime);
 	
-	// Fire
+	/* Fire */
 	void FireButtonPressed(bool bPressed);
 	void Fire();
 
@@ -71,17 +95,46 @@ protected:
 
 	bool CanReload() const;
 
+	/* Throw Grenade */
+	void ThrowGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastThrowGrenade();
+
+	void SpawnGrenade();
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AProjectile> GrenadeClass;
+
+	AProjectile* SpawnedGrenade;
+
 private:
 	ABlasterCharacter* Character;
-	USkeletalMeshSocket const* HandSocket;
-	
 	class ABlasterPlayerController* Controller;
 	class ABlasterHUD* HUD;
 
+	/* Equip */
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon, BlueprintGetter = GetEquippedWeapon)
 	AWeapon* EquippedWeapon;
 
-	// Aim
+	void SetEquippedWeapon(AWeapon* NewWeapon);
+	
+	UFUNCTION(Server, Reliable)
+	void ServerEquipWeapon(AWeapon* NewWeapon);
+
+	void EquipWeapon(AWeapon* NewWeapon);
+
+	UFUNCTION(Server, Reliable)
+	void ServerDropWeapon();
+	
+	void DropWeapon(AWeapon* OldWeapon);
+
+	void AttachWeaponToSocket(AWeapon* Weapon, EWeaponSocket Socket);
+	
+	/* Aim */
 	UPROPERTY(Replicated)
 	bool bIsAiming;
 
@@ -132,6 +185,8 @@ private:
 	/* Carried Ammo */
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
+
+	void SetCarriedAmmo(int32 InCarriedAmmo);
 
 	UFUNCTION()
 	void OnRep_CarriedAmmo();

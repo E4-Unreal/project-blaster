@@ -26,6 +26,7 @@ struct FHUDPackage
 
 class UCharacterOverlay;
 class UWaitingToStartOverlay;
+class AWeapon;
 
 /**
  * 
@@ -72,6 +73,10 @@ public:
 	// Waiting Post Match Overlay
 	UFUNCTION()
 	void SetTopScoringPlayers(const TArray<ABlasterPlayerState*>& InTopScoringPlayers);
+
+	/* Weapon Overlay  */
+	UFUNCTION()
+	void SetEquippedWeapon(AWeapon* EquippedWeapon);
 
 private:
 	/* 사용자 위젯 */

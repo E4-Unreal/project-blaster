@@ -37,9 +37,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 	bIsAiming = BlasterCharacter->IsAiming();
 	bIsEliminated = BlasterCharacter->IsEliminated();
-	bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-	bUseAimOffset = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-	bUseTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bUseFABRIK = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	bUseAimOffset = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	bUseTransformRightHand = BlasterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
 
 	/*
 	 * Yaw Offset for Strafing

@@ -6,7 +6,9 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/Weapon/Weapon.h"
+#include "Blaster/Weapon/Projectile/Projectile.h"
 #include "Camera/CameraComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -71,77 +73,101 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 /* Equip */
 
 // 서버에서만 호출할 것
-void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
+void UCombatComponent::ServerEquipWeapon_Implementation(AWeapon* NewWeapon)
 {
-	if(Character == nullptr || NewWeapon == nullptr || HandSocket == nullptr) return;
+	if(Character == nullptr || NewWeapon == nullptr || CombatState != ECombatState::ECS_Unoccupied) return;
 
-	// 레플리케이트된 변수 업데이트
+	DropWeapon(EquippedWeapon);
+	EquipWeapon(NewWeapon);
+	SetEquippedWeapon(NewWeapon);
+	Character->Equipped();
+}
+
+void UCombatComponent::SetEquippedWeapon(AWeapon* NewWeapon)
+{
 	AWeapon* OldWeapon = EquippedWeapon;
 	EquippedWeapon = NewWeapon;
-	
-	/* Old Weapon */
-	if(OldWeapon)
-	{
-		OldWeapon->SetOwner(nullptr);
-		OldWeapon->SetInstigator(nullptr);
-		OldWeapon->UnEquipped();
-
-		// 기존 무기 장비 해제 시
-		if(NewWeapon == nullptr)
-			Character->UnEquipped();
-	}
-
-	/* New Weapon */
-	if(NewWeapon)
-	{
-		// TODO Pickup Weapon은 World가 Owner, 직접 가지고 온 무기는 Character가 Owner? 스폰의 주체를 Owner로 할까?
-		NewWeapon->SetOwner(Character); 
-		NewWeapon->SetInstigator(Character);
-		NewWeapon->Equipped(HandSocket, Character->GetMesh());
-		CarriedAmmo = CarriedAmmoMap.Contains(NewWeapon->GetWeaponType()) ? CarriedAmmoMap[NewWeapon->GetWeaponType()] : 0;
-		UpdateHUDCarriedAmmo();
-		
-		// 무기가 없는 상태에서 새로운 무기 장착 시
-		if(OldWeapon == nullptr)
-			Character->Equipped();
-	}
+	OnRep_EquippedWeapon(OldWeapon);
 }
 
 void UCombatComponent::OnRep_EquippedWeapon(AWeapon* OldWeapon)
 {
 	if(Character == nullptr) return;
-	AWeapon* NewWeapon = EquippedWeapon;
-	
-	/* Old Weapon */
-	if(OldWeapon)
-	{
-		OldWeapon->UnEquipped();
 
-		// 기존 무기 장비 해제 시
-		if(NewWeapon == nullptr)
-			Character->UnEquipped();
+	if(EquippedWeapon)
+	{
+		AttachWeaponToSocket(EquippedWeapon, EWeaponSocket::EWS_RightHand);
+		Character->Equipped();
+		EquippedWeapon->PlayEquipSound();
+	}
+	else
+	{
+		Character->UnEquipped();
 	}
 
-	/* New Weapon */
-	if(NewWeapon)
-	{
-		NewWeapon->Equipped(HandSocket, Character->GetMesh());
-
-		// 무기가 없는 상태에서 새로운 무기 장착 시
-		if(OldWeapon == nullptr)
-			Character->Equipped();
-	}
+	OnEquippedWeaponUpdated.Broadcast(EquippedWeapon);
 }
 
-void UCombatComponent::DropEquippedWeapon()
+void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 {
-	if(EquippedWeapon == nullptr) return;
+	if(NewWeapon == nullptr || Character == nullptr || !Character->HasAuthority()) return;
 	
-	EquippedWeapon->SetOwner(nullptr);
-	EquippedWeapon->UnEquipped(); // Server
-	EquippedWeapon = nullptr; // Client (OnRep_EquippedWeapon)
+	NewWeapon->SetOwner(Character); 
+	NewWeapon->SetInstigator(Character);
+	
+	SetCarriedAmmo(
+	CarriedAmmoMap.Contains(NewWeapon->GetWeaponType())
+	? CarriedAmmoMap[NewWeapon->GetWeaponType()]
+	: 0
+	);
+}
 
+void UCombatComponent::ServerDropWeapon_Implementation()
+{
+	if(Character == nullptr) return;
+	
+	DropWeapon(EquippedWeapon);
+	SetEquippedWeapon(nullptr);
 	Character->UnEquipped();
+}
+
+void UCombatComponent::DropWeapon(AWeapon* OldWeapon)
+{
+	if(OldWeapon == nullptr || Character == nullptr || !Character->HasAuthority()) return;
+
+	OldWeapon->SetOwner(nullptr);
+	OldWeapon->SetInstigator(nullptr);
+
+	SetCarriedAmmo(0);
+}
+
+void UCombatComponent::AttachWeaponToSocket(AWeapon* Weapon, EWeaponSocket Socket)
+{
+	if(Weapon == nullptr || Character == nullptr || Character->GetMesh() == nullptr) return;
+	
+	USkeletalMeshSocket const* TargetSocket;
+
+	switch (Socket)
+	{
+	case EWeaponSocket::EWS_RightHand:
+		TargetSocket = Character->GetRightHandSocket();
+		break;
+	case EWeaponSocket::EWS_LeftHand:
+		TargetSocket = Character->GetLeftHandSocket();
+		break;
+	default:
+		TargetSocket = nullptr;
+		break;
+	}
+
+	if(TargetSocket == nullptr) return;
+	Weapon->EnableCollisionAndPhysics(false);
+	TargetSocket->AttachActor(Weapon, Character->GetMesh());
+}
+
+void UCombatComponent::ManualUpdateHUD()
+{
+	OnEquippedWeaponUpdated.Broadcast(EquippedWeapon);
 }
 
 void UCombatComponent::Reload()
@@ -149,6 +175,14 @@ void UCombatComponent::Reload()
 	if(!CanReload()) return;
 	
 	ServerReload();
+}
+
+void UCombatComponent::AutoReload()
+{
+	if(EquippedWeapon && EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
 }
 
 void UCombatComponent::ServerReload_Implementation()
@@ -235,9 +269,85 @@ bool UCombatComponent::CanReload() const
 {
 	if(EquippedWeapon == nullptr) return false;
 	
-	bool bCombatCanReload = CombatState != ECombatState::ECS_Reloading && CarriedAmmo > 0;
+	bool bCombatCanReload = CombatState == ECombatState::ECS_Unoccupied && CarriedAmmo > 0;
 	
 	return bCombatCanReload && EquippedWeapon->CanReload();
+}
+
+void UCombatComponent::ThrowGrenade()
+{
+	if(CombatState != ECombatState::ECS_Unoccupied) return;
+	
+	ServerThrowGrenade();
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	MulticastThrowGrenade();
+}
+
+void UCombatComponent::MulticastThrowGrenade_Implementation()
+{
+	if(Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+		SpawnGrenade();
+		AttachWeaponToSocket(EquippedWeapon, EWeaponSocket::EWS_LeftHand);
+	}
+}
+
+void UCombatComponent::SpawnGrenade()
+{
+	if(Character == nullptr || Character->GetAttachedGrenade() == nullptr) return;
+
+	const AProjectile* GrenadeCDO = Cast<AProjectile>(GrenadeClass->GetDefaultObject(true));
+	if(GrenadeCDO->GetProjectileMesh())
+	{
+		Character->GetAttachedGrenade()->SetStaticMesh(
+		GrenadeCDO->GetProjectileMesh()->GetStaticMesh()
+		);
+		Character->GetAttachedGrenade()->SetVisibility(true);
+	}
+}
+
+void UCombatComponent::LaunchGrenade()
+{
+	if(Character && Character->GetAttachedGrenade())
+	{
+		Character->GetAttachedGrenade()->SetStaticMesh(nullptr);
+		Character->GetAttachedGrenade()->SetVisibility(false);
+
+		if(Character->IsLocallyControlled())	
+			ServerLaunchGrenade(Character->GetAttachedGrenade()->GetComponentLocation(), HitTarget);
+	}
+}
+
+void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& SpawnLocation, const FVector_NetQuantize& Target)
+{
+	if(GrenadeClass == nullptr) return;
+	
+	if(UWorld* World = GetWorld())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+
+		FVector Direction = Target - SpawnLocation;
+		
+		World->SpawnActor<AProjectile>(
+			GrenadeClass,
+			SpawnLocation,
+			Direction.Rotation(),
+			SpawnParams
+		);
+	}
+}
+
+void UCombatComponent::FinishThrowingGrenade()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+	AttachWeaponToSocket(EquippedWeapon, EWeaponSocket::EWS_RightHand);
 }
 
 int32 UCombatComponent::GetAmountToReload()
@@ -416,18 +526,6 @@ bool UCombatComponent::CanFire()
 {
 	if(EquippedWeapon == nullptr) return false;
 
-	// 무기가 발사 불가능한 상태인 경우
-	if(!EquippedWeapon->CanFire())
-	{
-		// 재장전이 필요한 경우
-		if(EquippedWeapon->IsEmpty())
-		{
-			Reload();
-		}
-
-		return false;
-	}
-
 	// TODO 리팩토링?
 	return EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun
 	? bCanFire // Reload 상태에서도 샷건은 발사 가능
@@ -454,6 +552,13 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	AutoReload();
+}
+
+void UCombatComponent::SetCarriedAmmo(int32 InCarriedAmmo)
+{
+	CarriedAmmo = InCarriedAmmo;
+	UpdateHUDCarriedAmmo();
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

@@ -7,6 +7,7 @@
 #include "Match/WaitingToStartOverlay.h"
 #include "Character/CharacterOverlay.h"
 #include "Blueprint/UserWidget.h"
+#include "Character/WeaponOverlay.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
 #include "Match/MatchTimerOverlay.h"
@@ -213,6 +214,13 @@ void ABlasterHUD::SetTopScoringPlayers(const TArray<ABlasterPlayerState*>& InTop
 	{
 		WaitingPostMatchOverlay->SetTopScoringPlayers(InTopScoringPlayers);
 	}
+}
+
+void ABlasterHUD::SetEquippedWeapon(AWeapon* EquippedWeapon)
+{
+	if(CharacterOverlay == nullptr || CharacterOverlay->GetWeaponOverlay() == nullptr) return;
+
+	CharacterOverlay->GetWeaponOverlay()->SetEquippedWeapon(EquippedWeapon);
 }
 
 void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread,

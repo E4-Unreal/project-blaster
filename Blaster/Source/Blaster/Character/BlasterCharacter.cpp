@@ -63,6 +63,12 @@ ABlasterCharacter::ABlasterCharacter()
 
 	// Dissolve
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+
+	// Attached Grenade
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName("grenade_r"));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttachedGrenade->SetVisibility(false);
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -101,6 +107,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
+	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &ThisClass::ThrowGrenadeButtonPressed);
+	PlayerInputComponent->BindAction("Drop", IE_Pressed, this, &ThisClass::DropButtonPressed);
 }
 
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -118,7 +126,13 @@ void ABlasterCharacter::PostInitializeComponents()
 	if(Combat)
 	{
 		Combat->Character = this;
-		Combat->HandSocket = GetMesh()->GetSocketByName(FName("weapon_r"));
+	}
+
+	/* Set Skeletal Mesh Socket */
+	if(GetMesh())
+	{
+		RightHandSocket = GetMesh()->GetSocketByName(FName("weapon_r"));
+		LeftHandSocket = GetMesh()->GetSocketByName(FName("weapon_l"));
 	}
 }
 
@@ -149,6 +163,11 @@ void ABlasterCharacter::UnEquipped()
 	// HUD Weapon UI 파괴 혹은 지우기
 	if(BlasterPlayerController)
 		BlasterPlayerController->HideWeaponOverlay();
+}
+
+USkeletalMeshSocket const* ABlasterCharacter::GetSkeletalMeshSocket(FName SocketName) const
+{
+	return GetMesh() == nullptr ? nullptr : GetMesh()->GetSocketByName(SocketName);
 }
 
 void ABlasterCharacter::PlayFireMontage(bool bIsAiming)
@@ -212,9 +231,10 @@ void ABlasterCharacter::PlayEliminatedMontage()
 
 void ABlasterCharacter::ServerEliminate()
 {
+	// Drop Weapon
 	if(Combat)
 	{
-		Combat->DropEquippedWeapon();
+		Combat->ServerDropWeapon();
 	}
 	
 	MulticastEliminate();
@@ -228,9 +248,8 @@ void ABlasterCharacter::ServerEliminate()
 
 void ABlasterCharacter::MulticastEliminate_Implementation()
 {
-	
 	bIsEliminated = true;
-	// PlayEliminatedMontage는 Blaster Anim Instance> 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
+	// PlayEliminatedMontage는 Blaster Anim Instance > 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
 
 	// Dissolve Effect
 	if(DissolveMaterialInstance)
@@ -286,15 +305,22 @@ void ABlasterCharacter::EliminatedTimerFinished()
 
 void ABlasterCharacter::PlayHitReactMontage()
 {
-	// TODO UnEquipped 상태에서 몽타주 재생이 안 되는 이유? Montage_Play 호출은 하지만 실제로 재생은 안 됨
-	// if(Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
-
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if(AnimInstance && HitReactMontage)
 	{
 		AnimInstance->Montage_Play(HitReactMontage);
 		const FName SectionName("FromFront"); // TODO 방향에 따라 다른 재생
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayThrowGrenadeMontage()
+{
+	// TODO AnimInstance 멤버 변수화?
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(AnimInstance && ThrowGrenadeMontage)
+	{
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
 	}
 }
 
@@ -346,7 +372,7 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if(Combat)
 	{
-		Combat->EquipWeapon(OverlappingWeapon);
+		Combat->ServerEquipWeapon(OverlappingWeapon);
 	}
 }
 
@@ -394,6 +420,25 @@ void ABlasterCharacter::ReloadButtonPressed()
 {
 	if(Combat)
 		Combat->Reload();
+}
+
+void ABlasterCharacter::ThrowGrenadeButtonPressed()
+{
+	if(Combat)
+		Combat->ThrowGrenade();
+}
+
+void ABlasterCharacter::DropButtonPressed()
+{
+	ServerDropButtonPressed();
+}
+
+void ABlasterCharacter::ServerDropButtonPressed_Implementation()
+{
+	if(Combat)
+	{
+		Combat->ServerDropWeapon();
+	}
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)

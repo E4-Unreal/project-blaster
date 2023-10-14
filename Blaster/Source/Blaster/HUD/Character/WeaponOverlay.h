@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "WeaponOverlay.generated.h"
 
+class AWeapon;
+
 /**
  * 
  */
@@ -15,6 +17,8 @@ class BLASTER_API UWeaponOverlay : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	void SetEquippedWeapon(AWeapon* InEquippedWeapon);
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int Ammo;
 
@@ -23,4 +27,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int MagCapacity;
+
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	AWeapon* EquippedWeapon;
 };

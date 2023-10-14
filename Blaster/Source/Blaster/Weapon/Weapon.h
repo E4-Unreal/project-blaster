@@ -19,9 +19,10 @@ public:
 	virtual void SetOwner(AActor* NewOwner) override;
 
 	/* Equip */
-	void Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshComponent* InMesh);
-	void UnEquipped();
+	void Equipped();
+	void Unequipped();
 	void ShowPickupWidget(bool bShowWidget);
+	void PlayEquipSound();
 
 	/* Fire */
 	virtual void Fire(const FVector& HitTarget);
@@ -160,7 +161,6 @@ public:
 	// 무기 정보
 	UFUNCTION(BlueprintGetter)
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
-	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
 
 	// Query
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }

@@ -3,6 +3,7 @@
 
 #include "BlasterPlayerController.h"
 
+#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/Character/CharacterOverlay.h"
@@ -126,6 +127,12 @@ void ABlasterPlayerController::InitBlasterCharacter()
 	BlasterCharacter->OnHealthUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetHealth);
 	BlasterCharacter->OnMaxHealthUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetMaxHealth);
 	BlasterCharacter->ManualUpdateHUD();
+
+	if(BlasterCharacter->GetCombatComponent())
+	{
+		BlasterCharacter->GetCombatComponent()->OnEquippedWeaponUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetEquippedWeapon);
+		BlasterCharacter->GetCombatComponent()->ManualUpdateHUD();
+	}
 }
 
 void ABlasterPlayerController::SetBlasterPlayerState(APlayerState* InPlayerState)

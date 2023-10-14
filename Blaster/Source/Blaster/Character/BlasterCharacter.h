@@ -20,11 +20,14 @@ class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractableWit
 	GENERATED_BODY()
 
 public:
+	/* HUD */
 	UPROPERTY(BlueprintAssignable)
 	FHealthUpdatedSignature OnHealthUpdated;
 
 	UPROPERTY(BlueprintAssignable)
 	FMaxHealthUpdatedSignature OnMaxHealthUpdated;
+
+	void ManualUpdateHUD();
 	
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
@@ -37,19 +40,19 @@ public:
 	void Equipped();
 	void UnEquipped();
 
-	// 애님 몽타주 재생
+	USkeletalMeshSocket const* GetSkeletalMeshSocket(FName SocketName) const;
+
+	/* 애님 몽타주 */
 	void PlayFireMontage(bool bIsAiming);
 	void PlayReloadMontage();
 	void PlayEliminatedMontage();
+	void PlayThrowGrenadeMontage();
 
 	// Eliminated
 	void ServerEliminate();
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastEliminate();
-
-	/* HUD */
-	void ManualUpdateHUD();
 
 	/* 저격 조준경 */
 	UFUNCTION(BlueprintImplementableEvent)
@@ -60,18 +63,29 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	// Movement
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void Turn(float Value);
 	void LookUp(float Value);
 	virtual void Jump() override;
-	void EquipButtonPressed();
 	void CrouchButtonPressed();
+
+	// Combat
+	void EquipButtonPressed();
+	void DropButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void ReloadButtonPressed();
+	void ThrowGrenadeButtonPressed();
+
+	UFUNCTION(Server, Reliable)
+	void ServerEquipButtonPressed();
+
+	UFUNCTION(Server, Reliable)
+	void ServerDropButtonPressed();
 	
 	void AimOffset(float DeltaTime);
 
@@ -97,9 +111,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
-	UFUNCTION(Server, Reliable)
-	void ServerEquipButtonPressed();
-
 	/* Turn In Place */
 	float Yaw;
 	float InterpYaw;
@@ -121,6 +132,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* EliminatedMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	void PlayHitReactMontage();
 
@@ -186,6 +200,16 @@ private:
 	// 다이나믹 머터리얼 인스턴스의 원본
 	UPROPERTY(EditAnywhere, Category = Dissolve)
 	UMaterialInstance* DissolveMaterialInstance;
+
+	/* Skeletal Mesh Socket */
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshSocket const* RightHandSocket;
+
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshSocket const* LeftHandSocket;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* AttachedGrenade;
 	
 public:
 	// Character
@@ -194,6 +218,7 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	// Combat Component
+	FORCEINLINE UCombatComponent* GetCombatComponent() const { return Combat; }
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
 	AWeapon* GetEquippedWeapon();
@@ -205,4 +230,9 @@ public:
 	FORCEINLINE float GetPitch() const { return Pitch; }
 	FORCEINLINE ETurnInPlaceState GetTurnInPlaceState() const { return TurnInPlaceState; }
 	FORCEINLINE bool IsEliminated() const { return bIsEliminated; }
+
+	/* Skeletal Mesh Socket */
+	FORCEINLINE USkeletalMeshSocket const* GetRightHandSocket() const { return RightHandSocket; }
+	FORCEINLINE USkeletalMeshSocket const* GetLeftHandSocket() const { return LeftHandSocket; }
+	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
 };

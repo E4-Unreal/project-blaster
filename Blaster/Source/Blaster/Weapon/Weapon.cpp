@@ -87,6 +87,11 @@ void AWeapon::SetOwner(AActor* NewOwner)
 	Super::SetOwner(NewOwner);
 
 	Initialize(NewOwner);
+
+	if(Owner)
+		Equipped();
+	else
+		Unequipped();
 }
 
 void AWeapon::OnRep_Owner()
@@ -94,6 +99,11 @@ void AWeapon::OnRep_Owner()
 	Super::OnRep_Owner();
 
 	Initialize(Owner);
+
+	if(Owner)
+		Equipped();
+	else
+		Unequipped();
 }
 
 void AWeapon::Initialize(AActor* NewOwner)
@@ -107,28 +117,15 @@ void AWeapon::Initialize(AActor* NewOwner)
 		InitializeHUD();
 }
 
-void AWeapon::Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshComponent* InMesh)
+void AWeapon::Equipped()
 {
 	ShowPickupWidget(false);
 
-	if(EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			EquipSound,
-			InMesh->GetOwner()->GetActorLocation(),
-			1,
-			1,
-			StartTime
-			);
-	}
-
 	EnableCollisionAndPhysics(false);
-	InSocket->AttachActor(this, InMesh);
 	EnableCustomDepth(false);
 }
 
-void AWeapon::UnEquipped()
+void AWeapon::Unequipped()
 {
 	DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	EnableCollisionAndPhysics(true);
@@ -140,6 +137,21 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	if(PickupWidget)
 	{
 		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeapon::PlayEquipSound()
+{
+	if(EquipSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			EquipSound,
+			GetActorLocation(),
+			1.f,
+			1.f,
+			StartTime
+		);
 	}
 }
 
