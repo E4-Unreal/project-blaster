@@ -133,7 +133,7 @@ private:
 	// For SetOwner && OnRep_Owner
 	void Initialize(AActor* NewOwner);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetWeaponType)
 	EWeaponType WeaponType;
 
 	/* Equip */
@@ -155,6 +155,7 @@ public:
 	FORCEINLINE bool IsAutomatic() const { return bIsAutomatic; }
 
 	// 무기 정보
+	UFUNCTION(BlueprintGetter)
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE USoundCue* GetEquipSound() const { return EquipSound; }
 

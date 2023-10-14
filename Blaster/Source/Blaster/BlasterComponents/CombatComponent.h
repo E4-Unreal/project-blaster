@@ -35,7 +35,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
-	void HandleFinishReloading();
+
+	UFUNCTION(BlueprintCallable)
+	void AddAmmoToWeapon();
+
+	UFUNCTION(BlueprintPure)
+	int32 GetAmountToReload();
 
 protected:
 	virtual void BeginPlay() override;
@@ -61,11 +66,10 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 
-	void HandleReload();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastReload();
 
 	bool CanReload() const;
-
-	int32 GetAmountToReload();
 
 private:
 	ABlasterCharacter* Character;
@@ -74,7 +78,7 @@ private:
 	class ABlasterPlayerController* Controller;
 	class ABlasterHUD* HUD;
 
-	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon, BlueprintGetter = GetEquippedWeapon)
 	AWeapon* EquippedWeapon;
 
 	// Aim
@@ -167,6 +171,8 @@ private:
 	void OnRep_CombatState(ECombatState OldState);
 	
 public:
+	UFUNCTION(BlueprintGetter)
+	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 
 protected:
 	void SetIsAiming(bool IsAiming);

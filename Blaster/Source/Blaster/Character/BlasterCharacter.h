@@ -55,6 +55,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
+	void Montage_JumpToSection(FName SectionName) const;
+
 protected:
 	virtual void BeginPlay() override;
 

@@ -631,3 +631,13 @@ void ABlasterCharacter::StartDissolve()
 	DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
 	DissolveTimeline->Play();
 }
+
+void ABlasterCharacter::Montage_JumpToSection(FName SectionName) const
+{
+	if(GetMesh() == nullptr) return;
+	
+	if(UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}

@@ -25,7 +25,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	DOREPLIFETIME(ThisClass, EquippedWeapon);
 	DOREPLIFETIME(ThisClass, bIsAiming);
-	DOREPLIFETIME_CONDITION(ThisClass, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME(ThisClass, CarriedAmmo);
 	DOREPLIFETIME(ThisClass, CombatState);
 }
 
@@ -147,7 +147,7 @@ void UCombatComponent::DropEquippedWeapon()
 void UCombatComponent::Reload()
 {
 	if(!CanReload()) return;
-
+	
 	ServerReload();
 }
 
@@ -155,19 +155,23 @@ void UCombatComponent::ServerReload_Implementation()
 {
 	if(!CanReload()) return;
 
+	// TODO 굳이 서버에서만 할 필요가 있나? 멀티 캐스트로 한 뒤 Ammo만 Replicate 하면 되지 않나?
 	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
+	MulticastReload();
 }
 
+void UCombatComponent::MulticastReload_Implementation()
+{
+	Character->PlayReloadMontage();
+}
+
+// TODO 멀티 캐스트?
 void UCombatComponent::FinishReloading()
 {
 	if(Character == nullptr) return;
 
 	if(Character->HasAuthority())
 	{
-		// Carried Ammo에서 Weapon Ammo로 총알 이동
-		HandleFinishReloading();
-
 		// Reloading 상태 해제
 		CombatState = ECombatState::ECS_Unoccupied;
 
@@ -179,20 +183,32 @@ void UCombatComponent::FinishReloading()
 	}
 }
 
-void UCombatComponent::HandleFinishReloading()
+void UCombatComponent::AddAmmoToWeapon()
 {
-	if(EquippedWeapon == nullptr) return;
-	
-	// Carried Ammo에서 Weapon Ammo로 총알 이동
-	if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
-	{
-		const int32 AmountToReload = GetAmountToReload();
+	if(EquippedWeapon == nullptr || Character == nullptr) return;
 
-		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= AmountToReload;
-		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
-		UpdateHUDCarriedAmmo();
-		
-		EquippedWeapon->AddAmmo(AmountToReload);
+	// TODO TMap 대신 서버 클라이언트 모두 모든 종류의 총알을 보관하는 방법은 없을까
+	// Server
+	if(Character->HasAuthority())
+	{
+		// Map 변경 후 Carried Ammo 업데이트
+		const int32 Amount = EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun ? 1 : GetAmountToReload();
+		if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()) && CarriedAmmoMap[EquippedWeapon->GetWeaponType()] >= Amount)
+		{
+			CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= Amount;
+			CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+			EquippedWeapon->AddAmmo(Amount);
+			UpdateHUDCarriedAmmo();	
+		}
+	}
+	
+	// 샷건만 적용
+	if(EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun)
+	{
+		if(EquippedWeapon->IsFull() || CarriedAmmo == 0)
+		{
+			Character->Montage_JumpToSection(FName("ShotgunEnd"));
+		}
 	}
 }
 
@@ -201,14 +217,10 @@ void UCombatComponent::OnRep_CombatState(ECombatState OldState)
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Reloading:
-		HandleReload();
 		break;
 	case ECombatState::ECS_Unoccupied:
 		if(OldState == ECombatState::ECS_Reloading)
 		{
-			// Carried Ammo에서 Weapon Ammo로 총알 이동
-			HandleFinishReloading();
-			
 			// 클라이언트 플레이어의 Fire 입력 여부 확인
 			if(bIsFireButtonPressed)
 			{
@@ -217,11 +229,6 @@ void UCombatComponent::OnRep_CombatState(ECombatState OldState)
 		}
 		break;
 	}
-}
-
-void UCombatComponent::HandleReload()
-{
-	Character->PlayReloadMontage();
 }
 
 bool UCombatComponent::CanReload() const
@@ -386,6 +393,14 @@ void UCombatComponent::Fire()
 
 void UCombatComponent::ServerFire_Implementation()
 {
+	// TODO 리팩토링?
+	// For Shotgun
+	if(EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun)
+	{
+		bCanFire = true;
+		CombatState = ECombatState::ECS_Unoccupied;
+	}
+	
 	MulticastFire();
 }
 
@@ -412,10 +427,11 @@ bool UCombatComponent::CanFire()
 
 		return false;
 	}
-	
-	bool bCombatCanFire = bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 
-	return bCombatCanFire;
+	// TODO 리팩토링?
+	return EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun
+	? bCanFire // Reload 상태에서도 샷건은 발사 가능
+	: bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::StartFireTimer()

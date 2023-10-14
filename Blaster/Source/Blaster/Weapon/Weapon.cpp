@@ -187,6 +187,8 @@ void AWeapon::MulticastFire_Implementation()
 
 void AWeapon::AddAmmo(const int32 AmmoAmount)
 {
+	if(AmmoAmount <= 0) return;
+	
 	Ammo = FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity);
 	UpdateHUDAmmo();
 }
