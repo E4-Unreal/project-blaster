@@ -164,8 +164,6 @@ private:
 
 	/* HUD */
 	class ABlasterPlayerController* BlasterPlayerController;
-	/*void UpdateHUD_Health();
-	void UpdateHUD_MaxHealth();*/
 
 	/* Dissolve Effect */
 	UPROPERTY(VisibleAnywhere)

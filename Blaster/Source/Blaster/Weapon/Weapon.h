@@ -51,6 +51,9 @@ public:
 
 	virtual void EnableCollisionAndPhysics(bool Enable);
 
+	/* 커스텀 뎁스 활성화 */
+	void EnableCustomDepth(bool bEnable);
+
 protected:
 	virtual void BeginPlay() override;
 

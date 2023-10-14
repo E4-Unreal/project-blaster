@@ -27,6 +27,11 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	WeaponMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	WeaponMesh->SetEnableGravity(true);
+
+	WeaponMesh->CustomDepthStencilValue = CUSTOM_DEPTH_BLUE;
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
 
 	// AreaSphere
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
@@ -120,12 +125,14 @@ void AWeapon::Equipped(const USkeletalMeshSocket* InSocket, USkeletalMeshCompone
 
 	EnableCollisionAndPhysics(false);
 	InSocket->AttachActor(this, InMesh);
+	EnableCustomDepth(false);
 }
 
 void AWeapon::UnEquipped()
 {
 	DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	EnableCollisionAndPhysics(true);
+	EnableCustomDepth(true);
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget)
@@ -225,13 +232,19 @@ void AWeapon::EnableCollisionAndPhysics(bool Enable)
 	if(Enable)
 	{
 		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
 	}
 	else
 	{
 		ShowPickupWidget(false);
 		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
+	}
+}
+
+void AWeapon::EnableCustomDepth(bool bEnable)
+{
+	if(WeaponMesh)
+	{
+		WeaponMesh->SetRenderCustomDepth(bEnable);
 	}
 }
 

@@ -584,36 +584,11 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* OldWeapon)
 	}
 }
 
-/*void ABlasterCharacter::UpdateHUD_All()
-{
-	if(Controller == nullptr) return;
-	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
-
-	UpdateHUD_Health();
-	UpdateHUD_MaxHealth();
-}*/
-
 void ABlasterCharacter::ManualUpdateHUD()
 {
 	OnHealthUpdated.Broadcast(Health);
 	OnMaxHealthUpdated.Broadcast(MaxHealth);
 }
-
-/*void ABlasterCharacter::UpdateHUD_Health()
-{
-	if(BlasterPlayerController)
-	{
-		BlasterPlayerController->SetHUD_Health(Health);
-	}
-}*/
-
-/*void ABlasterCharacter::UpdateHUD_MaxHealth()
-{
-	if(BlasterPlayerController)
-	{
-		BlasterPlayerController->SetHUD_MaxHealth(MaxHealth);
-	}
-}*/
 
 void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
 {
