@@ -22,33 +22,38 @@ ABlasterGameMode::ABlasterGameMode()
 
 void ABlasterGameMode::Tick(float DeltaSeconds)
 {
+	UE_LOG(LogTemp, Error, TEXT("ABlasterGameMode::Tick"))
 	Super::Tick(DeltaSeconds);
 
-	// TODO 리팩토링?
-	if(MatchState == MatchState::WaitingToStart)
+	if(UWorld* World = GetWorld())
 	{
-		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds();
-		if(CountdownTime <= 0.f)
+		// TODO 리팩토링?
+		if(MatchState == MatchState::WaitingToStart)
 		{
-			StartMatch();
+			CountdownTime = WarmupTime - (World->GetTimeSeconds() - WarmupStartTime);
+			if(CountdownTime <= 0.f)
+			{
+				StartMatch();
+			}
+		}
+		else if(MatchState == MatchState::InProgress)
+		{
+			CountdownTime = MatchTime - (World->GetTimeSeconds() - MatchStartTime);
+			if(CountdownTime <= 0.f)
+			{
+				SetMatchState(MatchState::Cooldown);
+			}
+		}
+		else if(MatchState == MatchState::Cooldown)
+		{
+			CountdownTime = CooldownTime - (World->GetTimeSeconds() - CooldownStartTime);
+			if(CountdownTime <= 0.f)
+			{
+				RestartGame();
+			}
 		}
 	}
-	else if(MatchState == MatchState::InProgress)
-	{
-		CountdownTime = MatchTime + WarmupTime - GetWorld()->GetTimeSeconds();
-		if(CountdownTime <= 0.f)
-		{
-			SetMatchState(MatchState::Cooldown);
-		}
-	}
-	else if(MatchState == MatchState::Cooldown)
-	{
-		CountdownTime = CooldownTime + MatchTime + WarmupTime - GetWorld()->GetTimeSeconds();
-		if(CountdownTime <= 0.f)
-		{
-			RestartGame();
-		}
-	}
+
 }
 
 void ABlasterGameMode::InitGameState()
@@ -61,6 +66,8 @@ void ABlasterGameMode::InitGameState()
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
                                         ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
+	if(MatchState != MatchState::InProgress) return;
+	
 	// TODO Score
 	ABlasterPlayerState* AttackerPlayerState = AttackerController
 	? Cast<ABlasterPlayerState>(AttackerController->PlayerState)
@@ -87,6 +94,14 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 
 	if(EliminatedCharacter)
 		EliminatedCharacter->ServerEliminate();
+
+	if(BlasterGameState)
+	{
+		if(BlasterGameState->GetTopScore() >= FMath::Min(MatchScore * (GameState.Get()->PlayerArray.Num() - 1), MaxMatchScore))
+		{
+			SetMatchState(MatchState::Cooldown);
+		}
+	}
 }
 
 void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController)
@@ -102,5 +117,39 @@ void ABlasterGameMode::RequestRespawn(ACharacter* EliminatedCharacter, AControll
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
 		const int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 		RestartPlayerAtPlayerStart(EliminatedController, PlayerStarts[Selection]);
+	}
+}
+
+void ABlasterGameMode::OnMatchStateSet()
+{
+	UE_LOG(LogTemp, Error, TEXT("ABlasterGameMode::OnMatchStateSet : %s"), *MatchState.ToString())
+	Super::OnMatchStateSet();
+
+	if(UWorld* World = GetWorld())
+	{
+		if(MatchState == MatchState::WaitingToStart)
+		{
+			WarmupStartTime = World->GetTimeSeconds();
+			if(BlasterGameState)
+			{
+				BlasterGameState->WarmupStartTime = WarmupStartTime;
+			}
+		}
+		else if(MatchState == MatchState::InProgress)
+		{
+			MatchStartTime = World->GetTimeSeconds();
+			if(BlasterGameState)
+			{
+				BlasterGameState->MatchStartTime = MatchStartTime;
+			}
+		}
+		else if(MatchState == MatchState::Cooldown)
+		{
+			CooldownStartTime = World->GetTimeSeconds();;
+			if(BlasterGameState)
+			{
+				BlasterGameState->CooldownStartTime = CooldownStartTime;
+			}
+		}
 	}
 }

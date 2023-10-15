@@ -6,6 +6,7 @@
 #include "Casing.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/UI/PickupOverlay.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -56,6 +57,10 @@ void AWeapon::BeginPlay()
 	// 초기화
 	if(PickupWidget)
 	{
+		if(UPickupOverlay* PickupOverlay = Cast<UPickupOverlay>(PickupWidget->GetWidget()))
+		{
+			PickupOverlay->SetWeaponName(WeaponName);
+		}
 		PickupWidget->SetVisibility(false);
 	}
 
@@ -114,7 +119,7 @@ void AWeapon::Initialize(AActor* NewOwner)
 
 	// HUD 초기화
 	if(BlasterOwningController)
-		InitializeHUD();
+		ManualUpdateHUD();
 }
 
 void AWeapon::Equipped()
@@ -209,9 +214,8 @@ void AWeapon::MulticastFire_Implementation()
 void AWeapon::AddAmmo(const int32 AmmoAmount)
 {
 	if(AmmoAmount <= 0) return;
-	
-	Ammo = FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity);
-	UpdateHUDAmmo();
+
+	SetAmmo(FMath::Clamp(Ammo + AmmoAmount, 0, MagCapacity));
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -262,30 +266,23 @@ void AWeapon::EnableCustomDepth(bool bEnable)
 	}
 }
 
+void AWeapon::SetAmmo(int32 InAmmo)
+{
+	Ammo = InAmmo;
+	OnAmmoUpdated.Broadcast(Ammo);
+}
+
 void AWeapon::SpendRound()
 {
-	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
-	UpdateHUDAmmo();
+	SetAmmo(FMath::Clamp(Ammo - 1, 0, MagCapacity));
 }
 
 void AWeapon::OnRep_Ammo()
 {
-	UpdateHUDAmmo();
+	OnAmmoUpdated.Broadcast(Ammo);
 }
 
-void AWeapon::InitializeHUD()
+void AWeapon::ManualUpdateHUD()
 {
-	if(BlasterOwningController)
-	{
-		BlasterOwningController->SetHUDAmmo(Ammo);
-		BlasterOwningController->SetHUDMagCapacity(MagCapacity);
-	}
-}
-
-void AWeapon::UpdateHUDAmmo()
-{
-	if(BlasterOwningController)
-	{
-		BlasterOwningController->SetHUDAmmo(Ammo);
-	}
+	OnAmmoUpdated.Broadcast(Ammo);
 }

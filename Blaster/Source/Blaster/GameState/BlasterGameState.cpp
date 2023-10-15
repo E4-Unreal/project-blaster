@@ -14,27 +14,41 @@ ABlasterGameState::ABlasterGameState()
 
 void ABlasterGameState::Tick(float DeltaSeconds)
 {
+	UE_LOG(LogTemp, Error, TEXT("ABlasterGameState::Tick"))
 	Super::Tick(DeltaSeconds);
-
-	// TODO 리팩토링?
-	// 매치 상태에 따른 남은 시간 계산
-	float CountdownTime = 0.f;
-	if(MatchState == MatchState::WaitingToStart)
-		CountdownTime = FMath::Clamp(WarmupTime - GetServerWorldTimeSeconds(), 0.f, WarmupTime);
-	else if(MatchState == MatchState::InProgress)
-		CountdownTime = FMath::Clamp(MatchTime + WarmupTime - GetServerWorldTimeSeconds(), 0.f, MatchTime);
-	else if(MatchState == MatchState::Cooldown)
-		CountdownTime = FMath::Clamp( CooldownTime + MatchTime + WarmupTime - GetServerWorldTimeSeconds(), 0.f, CooldownTime);
 	
-	const uint32 SecondsLeftInt = FMath::FloorToInt(CountdownTime);
-
-	// Countdown Time을 1초 단위로 업데이트
-	if(CountdownTimeInt != SecondsLeftInt)
+	if(UWorld* World = GetWorld())
 	{
-		CountdownTimeInt = SecondsLeftInt;
+		// TODO 리팩토링?
+		// 매치 상태에 따른 남은 시간 계산
+		float CountdownTime = 0.f;
+		if(MatchState == MatchState::WaitingToStart)
+		{
+			const float Timer = GetServerWorldTimeSeconds() - WarmupStartTime;
+			CountdownTime = FMath::Clamp(WarmupTime - Timer, 0.f, WarmupTime);
+		}
+		else if(MatchState == MatchState::InProgress)
+		{
+			const float Timer = GetServerWorldTimeSeconds() - MatchStartTime;
+			CountdownTime = FMath::Clamp(MatchTime - Timer, 0.f, MatchTime);
+		}
+		else if(MatchState == MatchState::Cooldown)
+		{
+			const float Timer = GetServerWorldTimeSeconds() - CooldownStartTime;
+			CountdownTime = FMath::Clamp( CooldownTime - Timer, 0.f, CooldownTime);
+		}
 		
-		OnCountdownUpdated.Broadcast(CountdownTimeInt);
+		const uint32 SecondsLeftInt = FMath::FloorToInt(CountdownTime);
+
+		// Countdown Time을 1초 단위로 업데이트
+		if(CountdownTimeInt != SecondsLeftInt)
+		{
+			CountdownTimeInt = SecondsLeftInt;
+			
+			OnCountdownUpdated.Broadcast(CountdownTimeInt);
+		}
 	}
+
 }
 
 void ABlasterGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -45,16 +59,20 @@ void ABlasterGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(ThisClass, MatchTime);
 	DOREPLIFETIME(ThisClass, CooldownTime);
 	DOREPLIFETIME(ThisClass, TopScoringPlayers);
+	DOREPLIFETIME(ThisClass, MatchStartTime);
+	DOREPLIFETIME(ThisClass, CooldownStartTime);
+	DOREPLIFETIME(ThisClass, WarmupStartTime);
 }
 
 void ABlasterGameState::OnRep_MatchState()
 {
+	Super::OnRep_MatchState();
+	
 	OnMatchStateSet.Broadcast(MatchState);
 	
 	if(MatchState == MatchState::WaitingToStart)
 	{
-		UWorld* World = GetWorld();
-		if(World)
+		if(UWorld* World = GetWorld())
 		{
 			// 서버에서만 실행
 			if(World->GetAuthGameMode())
@@ -72,8 +90,6 @@ void ABlasterGameState::OnRep_MatchState()
 	{
 		OnTopScoringPlayersUpdated.Broadcast(TopScoringPlayers);
 	}
-	
-	Super::OnRep_MatchState();
 }
 
 void ABlasterGameState::UpdateTopScore(ABlasterPlayerState* ScoringPlayer)

@@ -26,6 +26,7 @@ public:
 	
 	virtual void PlayerEliminated(ABlasterCharacter* EliminatedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* EliminatedCharacter, AController* EliminatedController);
+	virtual void OnMatchStateSet() override;
 
 	/* Match 정보 */
 	UPROPERTY(EditDefaultsOnly)
@@ -41,4 +42,14 @@ private:
 	class ABlasterGameState* BlasterGameState;
 	
 	float CountdownTime = 0.f;
+
+	float WarmupStartTime;
+	float CooldownStartTime;
+	float MatchStartTime;
+
+	UPROPERTY(EditAnywhere)
+	int32 MatchScore = 5;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxMatchScore = 10;
 };

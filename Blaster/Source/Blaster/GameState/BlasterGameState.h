@@ -32,6 +32,15 @@ public:
 	DECLARE_EVENT_OneParam(ThisClass, FTopScoringPlayersUpdatedEvent, const TArray<ABlasterPlayerState*>&);
 	FTopScoringPlayersUpdatedEvent OnTopScoringPlayersUpdated;
 
+	UPROPERTY(Replicated)
+	float CooldownStartTime;
+
+	UPROPERTY(Replicated)
+	float MatchStartTime;
+
+	UPROPERTY(Replicated)
+	float WarmupStartTime;
+
 private:
 	/* Match 타이머 */
 	UPROPERTY(Replicated)
@@ -51,4 +60,7 @@ private:
 	// TODO 클라이언트에 Player State 있지 않나?
 	UPROPERTY(Replicated)
 	TArray<ABlasterPlayerState*> TopScoringPlayers;
+
+public:
+	FORCEINLINE float GetTopScore() const { return TopScore; }
 };

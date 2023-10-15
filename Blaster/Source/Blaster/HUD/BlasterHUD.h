@@ -47,10 +47,14 @@ public:
 	void ShowCharacterOverlay();
 	void ShowWaitingToStartOverlay();
 	void ShowWaitingPostMatchOverlay();
+	void ShowSniperScopeOverlay(bool bShowOverlay);
 	
 	void HideCharacterOverlay();
 	void HideWaitingToStartOverlay();
 	void HideWaitingPostMatchOverlay();
+
+	// TODO 임시 for Lobby
+	void HideAllExceptCharacterInfo() const;
 
 	/* Set Overlay Value */
 	// Character Overlay
@@ -65,6 +69,9 @@ public:
 
 	UFUNCTION()
 	void SetDefeats(int32 Defeats);
+
+	UFUNCTION()
+	void SetCarriedAmmo(int32 CarriedAmmo);
 
 	// Match Timer Overlay
 	UFUNCTION()
@@ -92,6 +99,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	UWaitingPostMatchOverlay* WaitingPostMatchOverlay;
 
+	// TODO 임시
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UUserWidget* SniperScopeOverlay;
+
 	UPROPERTY(EditAnywhere, Category = Overlay)
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
 
@@ -100,6 +111,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Overlay)
 	TSubclassOf<UUserWidget> WaitingPostMatchOverlayClass;
+
+	UPROPERTY(EditAnywhere, Category = Overlay)
+	TSubclassOf<UUserWidget> SniperScopeOverlayClass;
 	
 	// 크로스헤어
 	FHUDPackage HUDPackage;
@@ -111,6 +125,7 @@ private:
 
 	/* Match State */
 	UMatchTimerOverlay* CurrentMatchTimerOverlay;
+	FName MatchState;
 
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& InPackage) { HUDPackage = InPackage; }

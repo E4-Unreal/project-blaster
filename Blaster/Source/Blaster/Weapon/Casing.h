@@ -25,10 +25,16 @@ private:
 	UStaticMeshComponent* CasingMesh;
 
 	UPROPERTY(EditAnywhere)
-	float ShellEjectionImpulse;
-
-	UPROPERTY(EditAnywhere)
 	class USoundCue* ShellSound;
 
-	bool bFirstHit = false;
+	UPROPERTY(EditAnywhere)
+	float ShellEjectionImpulse;
+
+	/* Destroy */
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
+	
+	FTimerHandle DestroyTimer;
+	void SetDestroyTimer();
+	void OnDestroyTimerFinished();
 };

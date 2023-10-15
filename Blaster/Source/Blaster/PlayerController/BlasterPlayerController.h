@@ -18,6 +18,7 @@ public:
 	virtual void ClientSetHUD_Implementation(TSubclassOf<AHUD> NewHUDClass) override; // Set HUD
 	virtual void AcknowledgePossession(APawn* P) override; // Set Pawn
 
+	void ShowSniperScopeOverlay(bool bShowOverlay);
 private:
 	/* UI Model */
 	// Blaster Game State
@@ -56,11 +57,11 @@ private:
 public:
 	// TODO BlasterHUD로 옮길 예정
 	// Weapon
-	void SetHUDAmmo(int32 Ammo);
-	void SetHUDCarriedAmmo(int32 CarriedAmmo);
 	void SetHUDMagCapacity(int32 MagCapacity);
 	void HideWeaponOverlay() const;
 	void ShowWeaponOverlay() const;
 
 	FORCEINLINE ABlasterPlayerState* GetBlasterPlayerState() const { return BlasterPlayerState; }
+	FORCEINLINE ABlasterHUD* GetBlasterHUD() const { return BlasterHUD; }
+	FORCEINLINE ABlasterCharacter* GetBlasterCharacter() const { return BlasterCharacter; }
 };

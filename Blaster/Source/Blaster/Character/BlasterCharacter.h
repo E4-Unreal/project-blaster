@@ -13,6 +13,7 @@ enum class ETurnInPlaceState : uint8;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHealthUpdatedSignature, float, Health);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMaxHealthUpdatedSignature, float, MaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEliminatedSignature);
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractableWithCrosshairs
@@ -35,6 +36,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	virtual void Destroyed() override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	/* Equip */
 	void Equipped();
@@ -55,10 +57,12 @@ public:
 	void MulticastEliminate();
 
 	/* 저격 조준경 */
-	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
 	void Montage_JumpToSection(FName SectionName) const;
+
+	UPROPERTY(BlueprintAssignable)
+	FEliminatedSignature OnEliminated;
 
 protected:
 	virtual void BeginPlay() override;
@@ -210,6 +214,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
+
+	// TODO 임시
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<AWeapon>> StartingWeapons;
+
+	UPROPERTY(EditAnywhere)
+	bool bEnableStartingWeapon = true;
 	
 public:
 	// Character

@@ -14,6 +14,35 @@
 
 class AProjectile;
 
+USTRUCT(BlueprintType)
+struct FStartingAmmo
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere)
+	int32 StartingARAmmo = 60;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingRocketAmmo = 8;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingPistolAmmo = 30;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSMGAmmo = 60;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingShotgunAmmo = 16;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingSniperRifleAmmo = 10;
+
+	UPROPERTY(EditAnywhere)
+	int32 StartingGrenadeLauncherAmmo = 10;
+
+	UPROPERTY(EditAnywhere)
+	int32 Grenades = 1;
+};
+
 UENUM(BlueprintType)
 enum class EWeaponSocket : uint8
 {
@@ -25,6 +54,7 @@ enum class EWeaponSocket : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEquippedWeaponUpdatedSignature, AWeapon*, EquippedWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGrenadesUpdatedSignature, int32, GrenadeCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCarriedAmmoUpdatedSignature, int32, CarriedAmmo);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -44,6 +74,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FGrenadesUpdatedSignature OnGrenadesUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FCarriedAmmoUpdatedSignature OnCarriedAmmoUpdated;
 
 	void ManualUpdateHUD();
 
@@ -69,6 +102,11 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& SpawnLocation, const FVector_NetQuantize& Target);
+
+	// TODO 임시 for Lobby
+	void ApplyStartingAmmo(FStartingAmmo InStartingAmmo);
+
+	bool bAppliedStartingAmmo = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -217,10 +255,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int32 StartingGrenadeLauncherAmmo = 10;
+
+	FStartingAmmo StartingAmmo;
 	
 	void InitializeCarriedAmmo();
-
-	void UpdateHUDCarriedAmmo();
 
 	/* Combat State */
 	UPROPERTY(ReplicatedUsing = OnRep_CombatState)

@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAmmoUpdatedSignature, int32, Ammo);
+
 UCLASS()
 class BLASTER_API AWeapon : public AActor
 {
@@ -47,10 +49,12 @@ public:
 	UTexture2D* CrosshairsBottom;
 
 	/* HUD 총알 */
-	void InitializeHUD();
-	void UpdateHUDAmmo();
+	void ManualUpdateHUD();
 
 	virtual void EnableCollisionAndPhysics(bool Enable);
+
+	UPROPERTY(BlueprintAssignable)
+	FAmmoUpdatedSignature OnAmmoUpdated;
 
 	/* 커스텀 뎁스 활성화 */
 	void EnableCustomDepth(bool bEnable);
@@ -101,10 +105,16 @@ private:
 	// TODO Projectile Weapon 클래스?
 	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
 	TSubclassOf<class ACasing> CasingClass;
+
+	// Weapon 정보
+	UPROPERTY(EditAnywhere, Category = "Weapon|Properties")
+	FName WeaponName;
 	
 	// 총알
 	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_Ammo, Category = "Weapon|Properties")
 	int32 Ammo;
+
+	void SetAmmo(int32 InAmmo);
 
 	void SpendRound();
 	
@@ -169,4 +179,6 @@ public:
 	FORCEINLINE bool IsFull() const { return Ammo == MagCapacity; }
 	FORCEINLINE bool CanFire() const { return !IsEmpty(); }
 	FORCEINLINE bool CanReload() const { return !IsFull(); }
+	
+	FORCEINLINE FName GetWeaponName() const { return WeaponName; }
 };

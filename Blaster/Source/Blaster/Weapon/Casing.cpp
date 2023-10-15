@@ -32,19 +32,29 @@ void ACasing::BeginPlay()
 void ACasing::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
-	// TODO Remove Dynamic?
-	// 단 한 번만 실행
-	if(bFirstHit) return;
-	bFirstHit = true;
+	CasingMesh->OnComponentHit.RemoveDynamic(this, &ThisClass::OnHit);
 	
 	if(ShellSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ShellSound, GetActorLocation());
 	}
-	// TODO 몇 초 뒤에 삭제
-	FTimerHandle DestroyTimer;
-	FTimerDelegate DestroyDelegate;
-	DestroyDelegate.BindLambda([this]{ Destroy(); });
-	GetWorldTimerManager().SetTimer(DestroyTimer, DestroyDelegate, 3.f, false);
+
+	SetDestroyTimer();
+}
+
+void ACasing::SetDestroyTimer()
+{
+	// Destroy 타이머 설정
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&ThisClass::OnDestroyTimerFinished,
+		DestroyTime
+	);
+}
+
+void ACasing::OnDestroyTimerFinished()
+{
+	Destroy();
 }
 

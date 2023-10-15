@@ -26,6 +26,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsText;
 
+	// TODO 임시 for Lobby
+	void HideAllExceptCharacterInfo() const;
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float Health;

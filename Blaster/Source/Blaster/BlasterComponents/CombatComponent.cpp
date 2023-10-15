@@ -29,6 +29,32 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(ThisClass, bIsAiming);
 	DOREPLIFETIME(ThisClass, CarriedAmmo);
 	DOREPLIFETIME(ThisClass, CombatState);
+	DOREPLIFETIME(ThisClass, Grenades);
+}
+
+void UCombatComponent::ApplyStartingAmmo(FStartingAmmo InStartingAmmo)
+{
+	// TODO 리팩토링?
+	StartingAmmo = InStartingAmmo;
+	CarriedAmmoMap.Emplace(EWeaponType::EW_AssaultRifle, InStartingAmmo.StartingARAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_RocketLauncher, InStartingAmmo.StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_Pistol, InStartingAmmo.StartingPistolAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_SMG, InStartingAmmo.StartingSMGAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_ShotGun, InStartingAmmo.StartingShotgunAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_SniperRifle, InStartingAmmo.StartingSniperRifleAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EW_GrenadeLauncher, InStartingAmmo.StartingGrenadeLauncherAmmo);
+	Grenades = StartingAmmo.Grenades;
+
+	if(EquippedWeapon)
+	{
+		SetCarriedAmmo(
+			CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())
+			? CarriedAmmoMap[EquippedWeapon->GetWeaponType()]
+			: 0
+		);
+	}
+
+	bAppliedStartingAmmo = true;
 }
 
 void UCombatComponent::BeginPlay()
@@ -116,9 +142,9 @@ void UCombatComponent::EquipWeapon(AWeapon* NewWeapon)
 	NewWeapon->SetInstigator(Character);
 	
 	SetCarriedAmmo(
-	CarriedAmmoMap.Contains(NewWeapon->GetWeaponType())
-	? CarriedAmmoMap[NewWeapon->GetWeaponType()]
-	: 0
+		CarriedAmmoMap.Contains(NewWeapon->GetWeaponType())
+		? CarriedAmmoMap[NewWeapon->GetWeaponType()]
+		: 0
 	);
 }
 
@@ -169,6 +195,12 @@ void UCombatComponent::ManualUpdateHUD()
 {
 	OnEquippedWeaponUpdated.Broadcast(EquippedWeapon);
 	OnGrenadesUpdated.Broadcast(Grenades);
+	OnCarriedAmmoUpdated.Broadcast(CarriedAmmo);
+	
+	if(EquippedWeapon)
+	{
+		EquippedWeapon->ManualUpdateHUD();
+	}
 }
 
 void UCombatComponent::Reload()
@@ -231,9 +263,8 @@ void UCombatComponent::AddAmmoToWeapon()
 		if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()) && CarriedAmmoMap[EquippedWeapon->GetWeaponType()] >= Amount)
 		{
 			CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= Amount;
-			CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+			SetCarriedAmmo(CarriedAmmoMap[EquippedWeapon->GetWeaponType()]);
 			EquippedWeapon->AddAmmo(Amount);
-			UpdateHUDCarriedAmmo();	
 		}
 	}
 	
@@ -480,13 +511,17 @@ void UCombatComponent::TraceUnderCrosshair(FHitResult& TraceHitResult)
 
 		FCollisionQueryParams CollisionQueryParams;
 		CollisionQueryParams.AddIgnoredActor(GetOwner());
-		GetWorld()->LineTraceSingleByChannel(
+
+		if(UWorld* World = GetWorld())
+		{
+			World->LineTraceSingleByChannel(
 			TraceHitResult,
 			Start,
 			End,
 			ECC_Visibility,
 			CollisionQueryParams
 			);
+		}
 
 		// 허공을 바라보고 있는 경우
 		if(!TraceHitResult.bBlockingHit)
@@ -510,7 +545,18 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if(!CanFire() || EquippedWeapon == nullptr || !EquippedWeapon->CanFire()) return;
+	if(!CanFire() || EquippedWeapon == nullptr) return;
+
+	// 무기 상태 확인
+	if(!EquippedWeapon->CanFire())
+	{
+		if(EquippedWeapon->IsEmpty())
+		{
+			Reload();
+		}
+
+		return;
+	}
 
 	// Server RPC
 	EquippedWeapon->Fire(HitTarget);
@@ -523,6 +569,8 @@ void UCombatComponent::Fire()
 
 void UCombatComponent::ServerFire_Implementation()
 {
+	if(EquippedWeapon == nullptr) return;
+	
 	// TODO 리팩토링?
 	// For Shotgun
 	if(EquippedWeapon->GetWeaponType() == EWeaponType::EW_ShotGun)
@@ -536,7 +584,7 @@ void UCombatComponent::ServerFire_Implementation()
 
 void UCombatComponent::MulticastFire_Implementation()
 {
-	if(EquippedWeapon == nullptr || Character == nullptr) return;
+	if(Character == nullptr || EquippedWeapon == nullptr) return;
 
 	// Handle Fire (Character)
 	Character->PlayFireMontage(bIsAiming);
@@ -578,16 +626,18 @@ void UCombatComponent::FireTimerFinished()
 void UCombatComponent::SetCarriedAmmo(int32 InCarriedAmmo)
 {
 	CarriedAmmo = InCarriedAmmo;
-	UpdateHUDCarriedAmmo();
+	OnCarriedAmmoUpdated.Broadcast(CarriedAmmo);
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()
 {
-	UpdateHUDCarriedAmmo();
+	OnCarriedAmmoUpdated.Broadcast(CarriedAmmo);
 }
 
 void UCombatComponent::InitializeCarriedAmmo()
 {
+	if(bAppliedStartingAmmo) return;
+	
 	// TODO TMap For Loop로 설정?
 	CarriedAmmoMap.Emplace(EWeaponType::EW_AssaultRifle, StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EW_RocketLauncher, StartingRocketAmmo);
@@ -596,12 +646,15 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EW_ShotGun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EW_SniperRifle, StartingSniperRifleAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EW_GrenadeLauncher, StartingGrenadeLauncherAmmo);
-}
 
-void UCombatComponent::UpdateHUDCarriedAmmo()
-{
-	if(Controller)
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	if(EquippedWeapon)
+	{
+		SetCarriedAmmo(
+			CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())
+			? CarriedAmmoMap[EquippedWeapon->GetWeaponType()]
+			: 0
+		);
+	}
 }
 
 // Aim

@@ -3,6 +3,19 @@
 
 #include "CharacterOverlay.h"
 
+#include "Blaster/HUD/Match/MatchTimerOverlay.h"
+#include "Components/TextBlock.h"
+
+void UCharacterOverlay::HideAllExceptCharacterInfo() const
+{
+	if(MatchTimerOverlay)
+	{
+		MatchTimerOverlay->SetVisibility(ESlateVisibility::Hidden);
+		ScoreText->SetVisibility(ESlateVisibility::Hidden);
+		DefeatsText->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 void UCharacterOverlay::SetHealth(const float InHealth)
 {
 	Health = InHealth;

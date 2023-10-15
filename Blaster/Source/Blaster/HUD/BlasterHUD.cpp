@@ -18,18 +18,35 @@ void ABlasterHUD::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	if(GetOwningPlayerController() == nullptr) return;
+
+	if(WaitingToStartOverlayClass)
+	{
+		WaitingToStartOverlay = CreateWidget<UWaitingToStartOverlay>(GetOwningPlayerController(), WaitingToStartOverlayClass);
+		WaitingToStartOverlay->AddToViewport();
+		WaitingToStartOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	// TODO 임시
+	if(SniperScopeOverlayClass)
+	{
+		SniperScopeOverlay = CreateWidget<UUserWidget>(GetOwningPlayerController(), SniperScopeOverlayClass);
+		SniperScopeOverlay->AddToViewport();
+		SniperScopeOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
 	
-	CharacterOverlay = CreateWidget<UCharacterOverlay>(GetOwningPlayerController(), CharacterOverlayClass);
-	CharacterOverlay->AddToViewport();
-	CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
-	
-	WaitingToStartOverlay = CreateWidget<UWaitingToStartOverlay>(GetOwningPlayerController(), WaitingToStartOverlayClass);
-	WaitingToStartOverlay->AddToViewport();
-	WaitingToStartOverlay->SetVisibility(ESlateVisibility::Hidden);
-	
-	WaitingPostMatchOverlay = CreateWidget<UWaitingPostMatchOverlay>(GetOwningPlayerController(), WaitingPostMatchOverlayClass);
-	WaitingPostMatchOverlay->AddToViewport();
-	WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
+	if(CharacterOverlayClass)
+	{
+		CharacterOverlay = CreateWidget<UCharacterOverlay>(GetOwningPlayerController(), CharacterOverlayClass);
+		CharacterOverlay->AddToViewport();
+		CharacterOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if(WaitingPostMatchOverlayClass)
+	{
+		WaitingPostMatchOverlay = CreateWidget<UWaitingPostMatchOverlay>(GetOwningPlayerController(), WaitingPostMatchOverlayClass);
+		WaitingPostMatchOverlay->AddToViewport();
+		WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
 }
 
 void ABlasterHUD::DrawHUD()
@@ -77,6 +94,8 @@ void ABlasterHUD::DrawHUD()
 
 void ABlasterHUD::OnMatchStateSet(FName NewState)
 {
+	MatchState = NewState;
+	
 	if(NewState == MatchState::WaitingToStart)
 	{
 		CurrentMatchTimerOverlay = WaitingToStartOverlay == nullptr ? nullptr : WaitingToStartOverlay->GetMatchTimerOverlay();
@@ -140,6 +159,20 @@ void ABlasterHUD::ShowWaitingPostMatchOverlay()
 	}
 }
 
+void ABlasterHUD::ShowSniperScopeOverlay(bool bShowOverlay)
+{
+	if(SniperScopeOverlay == nullptr) return;
+
+	if(bShowOverlay)
+	{
+		SniperScopeOverlay->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		SniperScopeOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 void ABlasterHUD::HideCharacterOverlay()
 {
 	if(CharacterOverlay)
@@ -161,6 +194,14 @@ void ABlasterHUD::HideWaitingPostMatchOverlay()
 	if(WaitingPostMatchOverlay)
 	{
 		WaitingPostMatchOverlay->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void ABlasterHUD::HideAllExceptCharacterInfo() const
+{
+	if(CharacterOverlay)
+	{
+		CharacterOverlay->HideAllExceptCharacterInfo();
 	}
 }
 
@@ -197,6 +238,14 @@ void ABlasterHUD::SetDefeats(int32 Defeats)
 	{
 		const FString DefeatsString = FString::Printf(TEXT("Defeats : %d"), Defeats);
 		CharacterOverlay->DefeatsText->SetText(FText::FromString(DefeatsString));
+	}
+}
+
+void ABlasterHUD::SetCarriedAmmo(int32 CarriedAmmo)
+{
+	if(CharacterOverlay && CharacterOverlay->GetWeaponOverlay())
+	{
+		CharacterOverlay->GetWeaponOverlay()->SetCarriedAmmo(CarriedAmmo);
 	}
 }
 

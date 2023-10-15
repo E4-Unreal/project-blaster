@@ -80,6 +80,24 @@ void ABlasterCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::OnTakeAnyDamage_Event);
 	}
+
+	// TODO 임시
+	if(bEnableStartingWeapon && HasAuthority() && !StartingWeapons.IsEmpty())
+	{
+		int32 Index = FMath::RandRange(0, StartingWeapons.Num() - 1);
+		if(UWorld* World = GetWorld())
+		{
+			AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(
+				StartingWeapons[Index],
+				GetActorTransform()
+			);
+
+			if(Combat)
+			{
+				Combat->ServerEquipWeapon(StartingWeapon);
+			}
+		}
+	}
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -144,6 +162,13 @@ void ABlasterCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
+}
+
+void ABlasterCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	BlasterPlayerController = Cast<ABlasterPlayerController>(NewController);
 }
 
 void ABlasterCharacter::Equipped()
@@ -248,6 +273,8 @@ void ABlasterCharacter::ServerEliminate()
 
 void ABlasterCharacter::MulticastEliminate_Implementation()
 {
+	OnEliminated.Broadcast();
+	
 	bIsEliminated = true;
 	// PlayEliminatedMontage는 Blaster Anim Instance > 'EliminatedSlot' 슬롯 > 초기 업데이트 시 OnEliminated에서 호출됨
 
@@ -293,13 +320,22 @@ void ABlasterCharacter::MulticastEliminate_Implementation()
 			GetActorLocation()
 		);
 	}
+
+	// Hide Scope
+	if(IsLocallyControlled())
+	{
+		ShowSniperScopeWidget(false);
+	}
 }
 
 void ABlasterCharacter::EliminatedTimerFinished()
 {
-	if(ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	if(UWorld* World = GetWorld())
 	{
-		BlasterGameMode->RequestRespawn(this, Controller);
+		if(ABlasterGameMode* BlasterGameMode = World->GetAuthGameMode<ABlasterGameMode>())
+		{
+			BlasterGameMode->RequestRespawn(this, Controller);
+		}
 	}
 }
 
@@ -494,16 +530,21 @@ void ABlasterCharacter::OnTakeAnyDamage_Event(AActor* DamagedActor, float Damage
 	// 체력과 데미지에 따른 반응
 	if(Health == 0.f) // Dead
 	{
-		if(ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		if(UWorld* World = GetWorld())
 		{
-			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
-			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
-			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+			if(ABlasterGameMode* BlasterGameMode = World->GetAuthGameMode<ABlasterGameMode>())
+			{
+				ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
+				BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+			}
 		}
 	}
 	else if(Damage > 0)
 	{
-		PlayHitReactMontage();
+		if(Combat && Combat->CombatState == ECombatState::ECS_Unoccupied)
+		{
+			PlayHitReactMontage();
+		}
 	}
 }
 
@@ -650,6 +691,14 @@ void ABlasterCharacter::StartDissolve()
 	DissolveTrack.BindDynamic(this, &ThisClass::UpdateDissolveMaterial);
 	DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
 	DissolveTimeline->Play();
+}
+
+void ABlasterCharacter::ShowSniperScopeWidget(bool bShowScope)
+{
+	if(BlasterPlayerController)
+	{
+		BlasterPlayerController->ShowSniperScopeOverlay(bShowScope);
+	}
 }
 
 void ABlasterCharacter::Montage_JumpToSection(FName SectionName) const

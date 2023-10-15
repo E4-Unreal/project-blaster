@@ -6,8 +6,6 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
-#include "Blaster/HUD/Character/CharacterOverlay.h"
-#include "Blaster/HUD/Match/MatchTimerOverlay.h"
 #include "Blaster/HUD/Character/WeaponOverlay.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Blaster/GameState/BlasterGameState.h"
@@ -73,6 +71,14 @@ void ABlasterPlayerController::AcknowledgePossession(APawn* P)
 	}
 }
 
+void ABlasterPlayerController::ShowSniperScopeOverlay(bool bShowOverlay)
+{
+	if(BlasterHUD)
+	{
+		BlasterHUD->ShowSniperScopeOverlay(bShowOverlay);
+	}
+}
+
 void ABlasterPlayerController::SetBlasterGameState(AGameStateBase* GameState)
 {
 	// Blaster Game State 할당
@@ -132,6 +138,7 @@ void ABlasterPlayerController::InitBlasterCharacter()
 	{
 		BlasterCharacter->GetCombatComponent()->OnEquippedWeaponUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetEquippedWeapon);
 		BlasterCharacter->GetCombatComponent()->OnGrenadesUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetGrenadeCount);
+		BlasterCharacter->GetCombatComponent()->OnCarriedAmmoUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetCarriedAmmo);
 		BlasterCharacter->GetCombatComponent()->ManualUpdateHUD();
 	}
 }
@@ -198,20 +205,6 @@ void ABlasterPlayerController::InitBlasterHUD()
 }
 
 /* Weapon Overlay */
-
-void ABlasterPlayerController::SetHUDAmmo(int32 Ammo)
-{
-	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
-
-	BlasterHUD->GetWeaponOverlay()->Ammo = Ammo;
-}
-
-void ABlasterPlayerController::SetHUDCarriedAmmo(int32 CarriedAmmo)
-{
-	if(BlasterHUD == nullptr || BlasterHUD->GetWeaponOverlay() == nullptr) return;
-
-	BlasterHUD->GetWeaponOverlay()->CarriedAmmo = CarriedAmmo;
-}
 
 void ABlasterPlayerController::SetHUDMagCapacity(int32 MagCapacity)
 {

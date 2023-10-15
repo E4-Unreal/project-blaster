@@ -7,7 +7,6 @@
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 
@@ -71,16 +70,17 @@ void AProjectile::SpawnHitEffects(const FVector& ImpactPoint, const FVector& Imp
 void AProjectile::SetDestroyTimer()
 {
 	// Destroy 타이머 설정
-	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(
-		TimerHandle,
-		FTimerDelegate::CreateLambda([this]()
-		{
-			Destroy();
-		}),
-		DestroyTime,
-		false
+		DestroyTimer,
+		this,
+		&ThisClass::OnDestroyTimerFinished,
+		DestroyTime
 	);
+}
+
+void AProjectile::OnDestroyTimerFinished()
+{
+	Destroy();
 }
 
 void AProjectile::Deactivate() const

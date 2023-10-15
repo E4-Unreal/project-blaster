@@ -34,7 +34,9 @@ protected:
 	/* Destroy */
 	virtual void Deactivate() const;
 
+	FTimerHandle DestroyTimer;
 	void SetDestroyTimer();
+	void OnDestroyTimerFinished();
 
 private:
 	UPROPERTY(VisibleAnywhere)
