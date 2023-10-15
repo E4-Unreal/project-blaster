@@ -15,3 +15,8 @@ void UWeaponOverlay::SetEquippedWeapon(AWeapon* InEquippedWeapon)
 		SetVisibility(ESlateVisibility::Visible);
 	}
 }
+
+void UWeaponOverlay::SetGrenadeCount(int32 InGrenadeCount)
+{
+	GrenadeCount = InGrenadeCount;
+}

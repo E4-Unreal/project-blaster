@@ -168,6 +168,7 @@ void UCombatComponent::AttachWeaponToSocket(AWeapon* Weapon, EWeaponSocket Socke
 void UCombatComponent::ManualUpdateHUD()
 {
 	OnEquippedWeaponUpdated.Broadcast(EquippedWeapon);
+	OnGrenadesUpdated.Broadcast(Grenades);
 }
 
 void UCombatComponent::Reload()
@@ -265,6 +266,18 @@ void UCombatComponent::OnRep_CombatState(ECombatState OldState)
 	}
 }
 
+void UCombatComponent::SetGrenades(int32 InGrenades)
+{
+	Grenades = InGrenades;
+
+	OnRep_Grenades();
+}
+
+void UCombatComponent::OnRep_Grenades()
+{
+	OnGrenadesUpdated.Broadcast(Grenades);
+}
+
 bool UCombatComponent::CanReload() const
 {
 	if(EquippedWeapon == nullptr) return false;
@@ -276,7 +289,13 @@ bool UCombatComponent::CanReload() const
 
 void UCombatComponent::ThrowGrenade()
 {
-	if(CombatState != ECombatState::ECS_Unoccupied) return;
+	if(CombatState != ECombatState::ECS_Unoccupied || Grenades <= 0 || EquippedWeapon == nullptr) return;
+
+	// For Local Client
+	if(Character && !Character->HasAuthority())
+	{
+		SetGrenades(Grenades - 1);
+	}
 	
 	ServerThrowGrenade();
 }
@@ -284,6 +303,7 @@ void UCombatComponent::ThrowGrenade()
 void UCombatComponent::ServerThrowGrenade_Implementation()
 {
 	CombatState = ECombatState::ECS_ThrowingGrenade;
+	SetGrenades(Grenades - 1);
 	MulticastThrowGrenade();
 }
 
@@ -490,7 +510,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 
 void UCombatComponent::Fire()
 {
-	if(!CanFire()) return;
+	if(!CanFire() || EquippedWeapon == nullptr || !EquippedWeapon->CanFire()) return;
 
 	// Server RPC
 	EquippedWeapon->Fire(HitTarget);

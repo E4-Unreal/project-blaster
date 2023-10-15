@@ -78,6 +78,9 @@ public:
 	UFUNCTION()
 	void SetEquippedWeapon(AWeapon* EquippedWeapon);
 
+	UFUNCTION()
+	void SetGrenadeCount(int32 GrenadeCount);
+
 private:
 	/* 사용자 위젯 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))

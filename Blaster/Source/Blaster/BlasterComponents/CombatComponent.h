@@ -24,6 +24,7 @@ enum class EWeaponSocket : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEquippedWeaponUpdatedSignature, AWeapon*, EquippedWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGrenadesUpdatedSignature, int32, GrenadeCount);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
@@ -40,6 +41,9 @@ public:
 	/* HUD */
 	UPROPERTY(BlueprintAssignable)
 	FEquippedWeaponUpdatedSignature OnEquippedWeaponUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FGrenadesUpdatedSignature OnGrenadesUpdated;
 
 	void ManualUpdateHUD();
 
@@ -224,6 +228,16 @@ private:
 
 	UFUNCTION()
 	void OnRep_CombatState(ECombatState OldState);
+
+	/* Grenade */
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 1;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+
+	UFUNCTION()
+	void SetGrenades(int32 InGrenades);
 	
 public:
 	UFUNCTION(BlueprintGetter)

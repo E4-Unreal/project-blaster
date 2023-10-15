@@ -157,6 +157,8 @@ void AWeapon::PlayEquipSound()
 
 void AWeapon::Fire(const FVector& HitTarget)
 {
+	if(!CanFire()) return;
+	
 	// TODO MuzzleFlashSocket 멤버 변수화?
 	// Muzzle Location
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");

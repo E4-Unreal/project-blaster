@@ -131,6 +131,7 @@ void ABlasterPlayerController::InitBlasterCharacter()
 	if(BlasterCharacter->GetCombatComponent())
 	{
 		BlasterCharacter->GetCombatComponent()->OnEquippedWeaponUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetEquippedWeapon);
+		BlasterCharacter->GetCombatComponent()->OnGrenadesUpdated.AddDynamic(BlasterHUD, &ABlasterHUD::SetGrenadeCount);
 		BlasterCharacter->GetCombatComponent()->ManualUpdateHUD();
 	}
 }

@@ -18,6 +18,8 @@ class BLASTER_API UWeaponOverlay : public UUserWidget
 
 public:
 	void SetEquippedWeapon(AWeapon* InEquippedWeapon);
+
+	void SetGrenadeCount(int32 InGrenadeCount);
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int Ammo;
@@ -31,4 +33,7 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	AWeapon* EquippedWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	int32 GrenadeCount;
 };

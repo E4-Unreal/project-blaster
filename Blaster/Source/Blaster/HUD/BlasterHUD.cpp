@@ -223,6 +223,13 @@ void ABlasterHUD::SetEquippedWeapon(AWeapon* EquippedWeapon)
 	CharacterOverlay->GetWeaponOverlay()->SetEquippedWeapon(EquippedWeapon);
 }
 
+void ABlasterHUD::SetGrenadeCount(int32 GrenadeCount)
+{
+	if(CharacterOverlay == nullptr || CharacterOverlay->GetWeaponOverlay() == nullptr) return;
+
+	CharacterOverlay->GetWeaponOverlay()->SetGrenadeCount(GrenadeCount);
+}
+
 void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, FVector2D ViewportCenter, FVector2D Spread,
                                  FLinearColor CrosshairsColor)
 {
